@@ -20,6 +20,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.window.OnBackInvokedDispatcher;
 
 import androidx.webkit.WebViewAssetLoader;
@@ -34,6 +35,7 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private NativeBridge bridge;
+    private Monetization store;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -45,11 +47,16 @@ public class MainActivity extends Activity {
             window.getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
 
-        FrameLayout root = new FrameLayout(this);
+        // Game on top, an (initially hidden) ad banner slot underneath.
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(3, 5, 6));
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(3, 5, 6));
-        root.addView(webView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        root.addView(webView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        FrameLayout bannerBox = new FrameLayout(this);
+        bannerBox.setVisibility(View.GONE);
+        root.addView(bannerBox, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         setContentView(root);
 
         // Keep the game clear of camera notches / punch-holes.
@@ -92,9 +99,12 @@ public class MainActivity extends Activity {
 
         bridge = new NativeBridge(this);
         webView.addJavascriptInterface(bridge, "CalibreNative");
+        store = new Monetization(this, webView, bannerBox);
+        webView.addJavascriptInterface(store, "CalibreStore");
 
         if (savedInstanceState != null) webView.restoreState(savedInstanceState);
         else webView.loadUrl(START_URL);
+        store.start();
 
         if (Build.VERSION.SDK_INT >= 33) {
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBack);
@@ -165,6 +175,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         bridge.stopAll();
+        store.destroy();
         webView.destroy();
         super.onDestroy();
     }

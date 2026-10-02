@@ -17,8 +17,13 @@ android {
         minSdk 26 // Android 8.0+: VibrationEffect (amplitude vibration) needs API 26
         targetSdk 36
         // Bump versionCode for every Play upload (or pass -PversionCode=N in CI).
-        versionCode((project.findProperty('versionCode') ?: '1') as int)
-        versionName project.findProperty('versionName') ?: '1.0.0'
+        versionCode((project.findProperty('versionCode') ?: '2') as int)
+        versionName project.findProperty('versionName') ?: '1.1.0'
+        // AdMob IDs: set admobAppId / admobBanner / admobRewarded in android/gradle.properties.
+        // Until then Google's official TEST ids are used (safe to click, no revenue).
+        manifestPlaceholders = [admobAppId: (project.findProperty('admobAppId') ?: 'ca-app-pub-3940256099942544~3347511713')]
+        buildConfigField 'String', 'AD_BANNER', "\"${project.findProperty('admobBanner') ?: 'ca-app-pub-3940256099942544/9214589741'}\""
+        buildConfigField 'String', 'AD_REWARDED', "\"${project.findProperty('admobRewarded') ?: 'ca-app-pub-3940256099942544/5224354917'}\""
     }
 
     signingConfigs {
@@ -34,6 +39,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // never show live ads on development builds
+            manifestPlaceholders = [admobAppId: 'ca-app-pub-3940256099942544~3347511713']
+            buildConfigField 'String', 'AD_BANNER', '"ca-app-pub-3940256099942544/9214589741"'
+            buildConfigField 'String', 'AD_REWARDED', '"ca-app-pub-3940256099942544/5224354917"'
+        }
         release {
             minifyEnabled false
             if (ks('storeFile', 'CALIBRE_KEYSTORE')) signingConfig signingConfigs.release
@@ -52,6 +63,9 @@ android {
 
 dependencies {
     implementation 'androidx.webkit:webkit:1.17.1'
+    implementation 'com.google.android.gms:play-services-ads:25.5.0'
+    implementation 'com.google.android.ump:user-messaging-platform:4.0.0'
+    implementation 'com.android.billingclient:billing:9.1.0'
 }
 
 // Copy the web game (repo root) into the APK as offline assets/www.

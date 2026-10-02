@@ -4,6 +4,7 @@ import { GunAudio } from './audio.js';
 import { Haptics, Torch, Particles, Weather, NATIVE } from './fx.js';
 import { SCENES, SCENE_ORDER, SCENE_ENV_KEY, sceneSvg } from './scenes.js';
 import { REGIONS, regionsOf, flags, flag } from './flags.js';
+import { Store, PRODUCTS, UNLOCK_HOURS, fmtLeft } from './store.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -99,7 +100,9 @@ function filtered() {
 
 function card(w) {
   const units = w.users.filter((u) => INDIAN_UNITS.has(u));
-  return `<button class="card" data-id="${w.id}" aria-label="${esc(w.name)}">
+  const locked = Store.gunLocked(w.id), left = Store.enabled && !locked && Store.tempLeft('g:' + w.id);
+  return `<button class="card ${locked ? 'locked' : ''}" data-id="${w.id}" aria-label="${esc(w.name)}">
+    ${locked ? '<span class="lockb"><svg><use href="#i-lock"/></svg>Premium</span>' : left ? `<span class="lockb tmp">${fmtLeft(left)} left</span>` : ''}
     <div class="corner">${w.modes.map((m) => `<i>${MODE_SHORT[m]}</i>`).join('')}</div>
     ${isIndian(w) ? '<i class="tri" title="Indian origin or service"></i>' : ''}
     ${favs.has(w.id) ? '<svg class="star"><use href="#i-star"/></svg>' : ''}
@@ -189,7 +192,7 @@ function openWeapon(id) {
   fb.classList.toggle('on', favs.has(id)); $('use', fb).setAttribute('href', favs.has(id) ? '#i-star' : '#i-star-o');
   $('#reload-banner').hidden = true;
   $('.reload').classList.remove('attn', 'busy');
-  renderModes(); renderAmmo(true); renderIntel(); renderEnvTag(); renderTab(); renderHeat();
+  renderModes(); renderAmmo(true); renderIntel(); renderEnvTag(); renderTab(); renderHeat(); renderLock();
 }
 
 // ------------------------------------------------------------------ intel rail + environment tag
@@ -276,6 +279,7 @@ const minGap = () => {
 const hasAmmo = () => settings.infinite || S.ammo > 0;
 
 async function pressTrigger() {
+  if (Store.gunLocked(S.w.id)) { openUnlock('g:' + S.w.id); return; }
   await audio.unlock();
   S.trigger = true;
   $('#trigger').classList.add('down'); $('#hint').classList.add('gone');
@@ -567,7 +571,7 @@ bindHold(stage, true);
 bindHold($('#trigger'));
 
 document.addEventListener('keydown', (e) => {
-  if ($('#view-sim').hidden || e.target.matches('input, select, textarea') || $('#settings').open || $('#scenes').open) return;
+  if ($('#view-sim').hidden || e.target.matches('input, select, textarea') || $$('dialog[open]').length) return;
   if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) pressTrigger(); }
   else if (e.key === 'r' || e.key === 'R') reload();
   else if (e.key === 'm' || e.key === 'M') { const m = S.modes; setMode(m[(m.indexOf(S.mode) + 1) % m.length]); }
@@ -637,7 +641,7 @@ function onMotion(e) {
 
 // ------------------------------------------------------------------ scenes
 function applyScene(id, announce = false) {
-  settings.scene = SCENES[id] ? id : 'range'; saveSettings();
+  settings.scene = SCENES[id] && !Store.sceneLocked(id) ? id : 'range'; saveSettings();
   const sc = scene();
   const el = $('#scene'); el.innerHTML = sceneSvg(settings.scene); el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
   audio.setEnvironment(sc.env);
@@ -651,12 +655,14 @@ function openScenes() {
   $('#scene-grid').innerHTML = SCENE_ORDER.map((id) => {
     const sc = SCENES[id], key = SCENE_ENV_KEY[id];
     const v = S.w ? (key ? S.w.env[ENV_IDX[key]] : id === 'mountain' ? Math.min(S.w.env[1], S.w.env[4]) : Math.round(S.w.env.reduce((a, b) => a + b, 0) / 5)) : 0;
-    return `<button class="scene-card" data-scene="${id}" aria-pressed="${id === settings.scene}">${sceneSvg(id)}<span class="lbl"><b>${sc.label}</b><small><span>${sc.sub}</span>${S.w ? `<span class="stars5">${stars(v)}</span>` : ''}</small></span></button>`;
+    const lk = Store.sceneLocked(id);
+    return `<button class="scene-card ${lk ? 'locked' : ''}" data-scene="${id}" aria-pressed="${id === settings.scene}">${sceneSvg(id)}${lk ? '<span class="lockb"><svg><use href="#i-lock"/></svg>Premium</span>' : ''}<span class="lbl"><b>${sc.label}</b><small><span>${sc.sub}</span>${S.w ? `<span class="stars5">${stars(v)}</span>` : ''}</small></span></button>`;
   }).join('');
   $('#scenes').showModal();
 }
 $('#scene-grid').addEventListener('click', (e) => {
   const b = e.target.closest('[data-scene]'); if (!b) return;
+  if (Store.sceneLocked(b.dataset.scene)) { openUnlock('s:' + b.dataset.scene); return; }
   applyScene(b.dataset.scene, true); $('#scenes').close();
 });
 
@@ -686,6 +692,20 @@ document.addEventListener('click', (e) => {
     settings.reloadMode = b.dataset.rmode; saveSettings(); syncAutoReload();
     toast(autoReload() ? 'Auto reload — the gun reloads itself when empty' : 'Manual reload — tap RELOAD (or R) when empty', 1600);
     if (autoReload() && S.w && !hasAmmo() && !S.reloading) reload();
+  }
+  else if (a === 'store') openStore();
+  else if (a === 'unlock-gun') openUnlock('g:' + S.w.id);
+  else if (a === 'restore') { Store.restore(); toast('Checking your purchases…', 1500); }
+  else if (a === 'privacy-options') Store.showPrivacyOptions();
+  else if (a === 'buy') { if (!Store.buy(b.dataset.id)) toast('Purchases aren\'t available right now — check your connection and Google Play.', 3000); }
+  else if (a === 'watch-ad') {
+    const key = b.dataset.key;
+    if (!Store.rewardedReady() || !Store.unlockWithAd(key, (earned) => {
+      if (!earned) { toast('Watch the whole video to unlock.', 2200); return; }
+      $('#unlock').close();
+      if (key.startsWith('s:')) { applyScene(key.slice(2), true); if ($('#scenes').open) $('#scenes').close(); }
+      toast(`Unlocked for ${UNLOCK_HOURS} hours`, 2200);
+    })) toast('No video available right now — try again in a moment.', 2500);
   }
   else if (a === 'fav') {
     const id = S.w.id;
@@ -864,7 +884,43 @@ $('#settings').addEventListener('input', (e) => {
   if (k === 'weather') applyScene(settings.scene);
   saveSettings();
 });
-[$('#settings'), $('#scenes')].forEach((d) => d.addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }));
+[$('#settings'), $('#scenes'), $('#unlock'), $('#store')].forEach((d) => d.addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }));
+
+// ------------------------------------------------------------------ store & unlocks
+function offerHtml(id, owned) {
+  const p = PRODUCTS[id];
+  return `<div class="offer ${p.best ? 'best' : ''} ${owned ? 'owned' : ''}">
+    <div><b>${p.name}${p.best ? ' <i>Best value</i>' : ''}</b><small>${p.blurb}</small></div>
+    ${owned ? '<span class="have">✓ Owned</span>' : `<button class="btn-primary" type="button" data-action="buy" data-id="${id}" ${Store.available(id) ? '' : 'disabled'}>${Store.available(id) ? esc(Store.price(id)) : 'Unavailable'}</button>`}
+  </div>`;
+}
+function openUnlock(key) {
+  const isGun = key.startsWith('g:'), id = key.slice(2);
+  const name = isGun ? byId[id].name : SCENES[id].label;
+  $('#unlock-title').textContent = `Unlock ${name}`;
+  $('#unlock-note').textContent = isGun ? 'Premium weapon. Its field manual is always free — unlock it to fire.' : 'Premium environment.';
+  $('#unlock-offers').innerHTML = `<div class="offer ad"><div><b><svg><use href="#i-ad"/></svg>Watch a short video</b><small>Free · unlocks ${isGun ? 'this weapon' : 'this environment'} for ${UNLOCK_HOURS} hours</small></div>
+      <button class="btn-primary" type="button" data-action="watch-ad" data-key="${key}">${Store.rewardedReady() ? 'Watch' : 'Loading…'}</button></div>
+    ${offerHtml('full_arsenal', false)}${offerHtml('pro_bundle', false)}`;
+  if (!$('#unlock').open) $('#unlock').showModal();
+}
+function openStore() {
+  $('#store-offers').innerHTML = Object.keys(PRODUCTS).map((id) => offerHtml(id, Store.owned.has(id) || Store.owned.has('pro_bundle'))).join('');
+  $('#privacy-options').hidden = !Store.privacyOptionsRequired();
+  if (!$('#store').open) $('#store').showModal();
+}
+function renderLock() { if (S.w) $('#lock').hidden = !Store.gunLocked(S.w.id); }
+Store.on(() => {
+  const ev = Store.lastEvent;
+  if (ev?.type === 'purchaseError') toast('Purchase didn\'t complete — please try again.', 2500);
+  if (ev?.type === 'owned' && Store.premium && $('#unlock').open) { $('#unlock').close(); toast('Thank you! Everything is unlocked.', 2600); }
+  if ($('#store').open) openStore();
+  if ($('#unlock').open && ev?.type === 'rewardedReady') { const b = $('#unlock [data-action="watch-ad"]'); if (b) b.textContent = Store.rewardedReady() ? 'Watch' : 'Loading…'; }
+  if (!$('#view-armory').hidden) renderGrid();
+  renderLock();
+  Store.setBanner(!$('#view-armory').hidden);
+});
+$$('[data-action="store"]').forEach((b) => { b.hidden = !Store.enabled; });
 
 // ------------------------------------------------------------------ routing & lifecycle
 let wakeLock = null;
@@ -906,6 +962,7 @@ function route() {
     keepAwake(false);
   }
   checkRotate();
+  Store.setBanner(!$('#view-armory').hidden);
 }
 window.addEventListener('hashchange', route);
 document.addEventListener('visibilitychange', () => {

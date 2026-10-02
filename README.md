@@ -132,3 +132,13 @@ The Gradle `syncWeb` task copies `index.html`, `css/`, `js/`, `fonts/`, `icons/`
 
 ### Store listing
 Texts, Play Console answers (data safety, content rating, target audience) and graphics are in `store/`. The privacy policy is `privacy.html`, served by Netlify at `/privacy.html`.
+
+## Monetization (Android app)
+
+- **Free:** 25 weapons and 3 environments (`js/store.js` → `FREE_GUNS`, `FREE_SCENES`). The website build has no store, so everything is open.
+- **Rewarded video:** unlocks one premium weapon or environment for 24 hours. Field manuals are always free.
+- **One-time purchases** (Google Play Billing): `remove_ads`, `full_arsenal`, `pro_bundle`. Create these exact IDs in Play Console. Owned items are restored automatically.
+- **Banner ad** only on the weapon list, never on the range. Google UMP consent runs first where required, and *Store → Ad privacy choices* appears when needed.
+- **Ad IDs:** set `admobAppId`, `admobBanner` and `admobRewarded` in `android/gradle.properties`. Until then, and always for debug builds, **Google's test ads** are used.
+- Test the store in a browser with `index.html?storetest` (simulated purchases and ads).
+- Put your publisher ID in `app-ads.txt` and serve it from your developer website.

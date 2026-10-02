@@ -516,3 +516,49 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 /* short (landscape phone) screens: the filter block is taller than the viewport, so don't pin it */
 @media (max-height: 560px) { .filters { position: static; background: none; } .hero { min-height: 0; padding: 18px 22px; } .hero-feat .art { height: 130px; } }
 .hero-feat .fstats { position: relative; z-index: 1; background: rgba(5, 8, 10, 0.78); padding: 5px 10px; box-shadow: inset 0 0 0 1px var(--line); }
+
+/* ============================================================== STORE & LOCKS */
+.head-actions { display: flex; gap: 8px; align-items: center; }
+.store-btn { --cut: 8px; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border: 0;
+  background: linear-gradient(180deg, #ffd35a, #e0a020); color: #1a1204; font-family: var(--f-ui); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.store-btn svg { width: 18px; height: 18px; }
+.card.locked .card-art svg { filter: grayscale(0.7) brightness(0.75) drop-shadow(0 10px 8px rgba(0, 0, 0, 0.7)); }
+.lockb { position: absolute; top: 34px; right: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: rgba(255, 194, 58, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 194, 58, 0.6);
+  color: var(--amber); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+.lockb svg { width: 12px; height: 12px; }
+.lockb.tmp { color: var(--cyan); background: rgba(69, 212, 255, 0.12); box-shadow: inset 0 0 0 1px rgba(69, 212, 255, 0.5); }
+.scene-card .lockb { top: 8px; }
+.scene-card.locked svg:first-child { filter: grayscale(0.6) brightness(0.7); }
+.lock { --cut: 12px; clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -30%); z-index: 4;
+  display: grid; justify-items: center; gap: 6px; padding: 16px 22px; background: rgba(5, 8, 10, 0.86); box-shadow: inset 0 0 0 1px rgba(255, 194, 58, 0.6); text-align: center; cursor: default; }
+.lock > svg { width: 28px; height: 28px; color: var(--amber); }
+.lock b { font-family: var(--f-ui); letter-spacing: 0.14em; text-transform: uppercase; }
+.lock span { font-size: 13px; color: var(--muted); }
+.lock .btn-primary { margin-top: 6px; padding: 10px 26px; font-size: 15px; background: linear-gradient(180deg, #ffd35a, #e0a020); }
+.offers { display: grid; gap: 10px; }
+.offer { --cut: 10px; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--line); }
+.offer b { display: flex; align-items: center; gap: 8px; font-family: var(--f-ui); font-size: 17px; letter-spacing: 0.04em; }
+.offer b svg { width: 18px; height: 18px; color: var(--acc); }
+.offer b i { font-style: normal; font-family: var(--f-mono); font-size: 10.5px; padding: 2px 6px; background: var(--amber); color: #1a1204; letter-spacing: 0.08em; text-transform: uppercase; }
+.offer small { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; margin-top: 2px; }
+.offer .btn-primary { flex: none; padding: 10px 16px; font-size: 15px; min-width: 96px; }
+.offer .btn-primary[disabled] { opacity: 0.45; }
+.offer.best { box-shadow: inset 0 0 0 1px var(--amber); }
+.offer.ad { box-shadow: inset 0 0 0 1px var(--acc); }
+.offer .have { color: var(--acc); font-family: var(--f-mono); font-size: 13px; }
+.store-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.store-foot a { text-decoration: none; color: var(--text); }
+@media (max-width: 720px) { .store-btn span { display: none; } .store-btn { padding: 0 12px; } }
+
+/* long names never run under the toolbar; HUD fits beside the field-manual column */
+.sim-title h1 { overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 1100px) and (max-width: 1560px) {
+  .sim-title h1 { font-size: clamp(20px, 2.3vw, 36px); }
+  .reload span, .rmode > span { display: none; }
+  .reload { padding: 0 14px; }
+  .hud { gap: 10px; }
+}
+.reload, .trigger, .rmode { flex: none; }
+.reload svg { flex: none; }
+.ammo-strip { min-width: 0; }
+@media (min-width: 1100px) and (max-width: 1560px) { .ammo-strip { gap: 2px; max-width: 24vw; } .round { width: 6px; } .ammo-strip.pistol .round, .ammo-strip.bmg .round { width: 9px; } }

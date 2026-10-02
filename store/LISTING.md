@@ -39,8 +39,8 @@ Firing range, desert, Himalayan snow, jungle, city street, night ops and indoor 
 ■ FILTER BY
 Era (WWI, WWII, Cold War, Modern) · Type (pistol, SMG, rifle, sniper, LMG, machine gun, shotgun) · Origin (India, USA, Russia, China, Europe, Israel, Japan & Korea) · Used by (Army, Navy, Air Force, Special Forces, SPG, NSG, Para SF, MARCOS, Garud, Police)
 
-■ PRIVATE & OFFLINE
-No ads, no accounts, no tracking, no internet needed.
+■ FREE TO PLAY
+25 weapons free forever. Unlock any premium weapon or environment for 24 hours by watching a short video, or upgrade once to Full Arsenal or Pro. No accounts and nothing to grind. Plays offline.
 
 For entertainment and education only. Sounds are synthesised simulations; specifications are typical published values.
 
@@ -50,12 +50,20 @@ For entertainment and education only. Sounds are synthesised simulations; specif
 - Phone screenshots: `screenshot-0*.png` (1920×1080, landscape)
 
 ## Play Console answers
+- **App-ads.txt:** host `app-ads.txt` (template in repo root) on the developer website you enter in Play Console.
 - **Privacy policy URL:** https://gunga.netlify.app/privacy.html (fill in your support email in `privacy.html` first)
 - **App access:** All functionality available without special access
-- **Ads:** No ads
+- **Ads:** **Yes, contains ads** (AdMob banner on the weapon list + optional rewarded videos)
+- **In-app products** (Monetize → Products → In-app products, all *one-time / non-consumable*):
+  | Product ID | Name | Suggested price |
+  |---|---|---|
+  | `remove_ads` | Remove ads | ₹99 |
+  | `full_arsenal` | Full Arsenal | ₹149 |
+  | `pro_bundle` | Pro (everything + no ads) | ₹199 |
 - **Content rating (IARC questionnaire):** Violence → realistic weapons depicted, *no* violence against people/creatures; no gore; no gambling; no user interaction. Expect roughly Teen / PEGI 12–16.
 - **Target audience:** 13+ (do **not** select ages under 13 — realistic weapons are not suitable for Families).
 - **News app:** No · **COVID-19:** No · **Government app:** No
-- **Data safety:** No data collected; no data shared. (The app has no internet permission.)
+- **Data safety:** declare what the **Google Mobile Ads SDK** collects. Per Google's AdMob data-disclosure guide, at the time of writing: *Location → Approximate location*; *App activity → App interactions*; *App info and performance → Crash logs, Diagnostics*; *Device or other IDs → Device or other IDs*. All of these are **collected and shared**, for **Advertising or marketing, Analytics, Fraud prevention/security**. Data is encrypted in transit; users can't request deletion through you (it's Google's data). You do **not** collect financial info yourself; Google Play handles payments. Double-check against Google's current "AdMob Data safety" and "Play Billing" help pages before submitting.
+- **Advertising ID:** Yes, the app uses the advertising ID (AdMob).
 - **Health / financial features:** None
 - **Weapons policy note:** The app simulates sounds and shows encyclopedic history/mechanism info. It does not sell weapons, facilitate sales, or give instructions to manufacture or modify firearms.
