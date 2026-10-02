@@ -9,7 +9,7 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
-## [1.2.2] — 2026-10-02 · Play build 6
+## [1.2.2] — 2026-10-02 · Play build 6 · `2730c2a`
 ### Fixed
 - The ad banner no longer shows over the first-run welcome screen; it appears once you enter the weapon list.
 - In the Android app the welcome screen no longer mentions browsers, Chrome or camera permission. It now says vibration follows each shot's sound and the flashlight needs no permission.
