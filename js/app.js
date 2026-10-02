@@ -18,9 +18,10 @@ const store = {
 };
 const DEFAULTS = {
   sound: true, vibrate: true, flash: true, torch: false, shake: false, scene: 'range',
-  volume: 0.9, amb: 0.35, haptic: 1, infinite: false, autoreload: true, recoil: true, particles: true, weather: true, softflash: false,
+  volume: 0.9, amb: 0.35, haptic: 1, infinite: false, reloadMode: 'manual', recoil: true, particles: true, weather: true, softflash: false,
 };
 const settings = { ...DEFAULTS, ...store.get('settings', {}), torch: false, shake: false };
+const autoReload = () => settings.reloadMode === 'auto';
 const saveSettings = () => { const { torch, shake, ...rest } = settings; store.set('settings', rest); };
 const favs = new Set(store.get('favs', []));
 
@@ -230,6 +231,7 @@ function renderModes() {
     return `<button class="mode ${sim ? 'sim' : ''}" role="radio" data-mode="${m}" aria-checked="${m === S.mode}" ${tip ? `title="${tip}"` : ''}><span class="led"></span>${m === 'burst' ? `${S.w.burst ?? 3}-rd burst` : MODE_NAME[m]}</button>`;
   }).join('');
 }
+$('.ammo').addEventListener('click', () => { if (S.w && S.ammo < S.w.capacity) reload(); });
 $('#modes').addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
 function setMode(m) {
   if (m === S.mode) return;
@@ -246,7 +248,16 @@ function renderAmmo(full) {
     strip.innerHTML = w.capacity <= 40 ? Array.from({ length: w.capacity }, () => '<i class="round"></i>').join('') : '<div class="ammo-bar"><i></i></div>';
     $('#ammo-cal').textContent = CARTS[w.cart].name.split(' (')[0];
   }
-  if (w.capacity <= 40) { const r = strip.children; for (let i = 0; i < r.length; i++) r[i].classList.toggle('spent', i >= S.ammo); }
+  if (w.capacity <= 40) {
+    const r = strip.children, refill = !full && S.ammo === w.capacity;
+    for (let i = 0; i < r.length; i++) {
+      const spent = i >= S.ammo;
+      if (!spent && r[i].classList.contains('spent') && refill) { r[i].style.animationDelay = `${(i % 40) * 18}ms`; r[i].classList.add('in'); }
+      if (spent) { r[i].classList.remove('in'); r[i].style.animationDelay = ''; }
+      r[i].classList.toggle('spent', spent);
+      if (full) r[i].classList.remove('in');
+    }
+  }
   else strip.querySelector('.ammo-bar i').style.width = `${(S.ammo / w.capacity) * 100}%`;
   const c = $('#ammo-count');
   c.textContent = settings.infinite ? '∞' : `${S.ammo} / ${w.capacity}`;
@@ -279,8 +290,9 @@ function releaseTrigger() {
 }
 function emptyClick() {
   audio.dryFire(); Haptics.tick(8);
+  $('#reload-banner').textContent = autoReload() ? 'EMPTY — RELOADING' : 'EMPTY — TAP RELOAD';
   $('#reload-banner').hidden = false; $('.reload').classList.add('attn');
-  if (settings.autoreload) setTimeout(() => { if (!S.reloading && !hasAmmo()) reload(); }, 350);
+  if (autoReload()) setTimeout(() => { if (!S.reloading && !hasAmmo()) reload(); }, 350);
 }
 
 function startSeries(n) {
@@ -416,7 +428,7 @@ function shotFx(item) {
   S.heat = Math.min(1, S.heat + 1 / hotAfter(w));
   renderAmmo(false);
   if (item.last) {
-    if (settings.autoreload) setTimeout(() => { if (!S.reloading && !hasAmmo()) reload(); }, w.ping ? 600 : 300);
+    if (autoReload()) setTimeout(() => { if (!S.reloading && !hasAmmo()) reload(); }, w.ping ? 600 : 300);
     else { $('#reload-banner').hidden = false; $('.reload').classList.add('attn'); }
   }
 }
@@ -599,7 +611,7 @@ async function toggle(name) {
   }
   saveSettings(); syncToggles();
 }
-function syncAutoReload() { $('[data-action="autoreload"]').setAttribute('aria-pressed', settings.autoreload); }
+function syncAutoReload() { $$('[data-rmode]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.rmode === settings.reloadMode)); }
 function syncToggles() {
   syncAutoReload();
   for (const n of ['sound', 'vibrate', 'flash', 'torch', 'shake']) { const b = $(`[data-tog="${n}"]`); b.classList.toggle('on', !!settings[n]); b.setAttribute('aria-pressed', !!settings[n]); }
@@ -668,7 +680,11 @@ document.addEventListener('click', (e) => {
   else if (a === 'prev') step(-1);
   else if (a === 'next') step(1);
   else if (a === 'reload') reload();
-  else if (a === 'autoreload') { settings.autoreload = !settings.autoreload; saveSettings(); syncAutoReload(); toast(settings.autoreload ? 'Auto reload ON — reloads by itself when empty' : 'Auto reload OFF', 1500); }
+  else if (a === 'rmode') {
+    settings.reloadMode = b.dataset.rmode; saveSettings(); syncAutoReload();
+    toast(autoReload() ? 'Auto reload — the gun reloads itself when empty' : 'Manual reload — tap RELOAD (or R) when empty', 1600);
+    if (autoReload() && S.w && !hasAmmo() && !S.reloading) reload();
+  }
   else if (a === 'fav') {
     const id = S.w.id;
     favs.has(id) ? favs.delete(id) : favs.add(id);
@@ -817,7 +833,8 @@ async function walkCycle() {
 // ------------------------------------------------------------------ settings dialog
 function openSettings() {
   $('#s-volume').value = settings.volume; $('#s-amb').value = settings.amb; $('#s-haptic').value = settings.haptic;
-  ['infinite', 'autoreload', 'recoil', 'particles', 'weather', 'softflash'].forEach((k) => { $(`#s-${k}`).checked = settings[k]; });
+  ['infinite', 'recoil', 'particles', 'weather', 'softflash'].forEach((k) => { $(`#s-${k}`).checked = settings[k]; });
+  $('#s-autoreload').checked = autoReload();
   $('#cap-note').textContent = [
     `Vibration: ${Haptics.supported ? 'supported' : 'not supported in this browser'}`,
     `Flashlight: ${Torch.possible && window.isSecureContext ? 'may be available (Chrome on Android)' : 'unavailable'}`,
@@ -831,7 +848,7 @@ $('#settings').addEventListener('input', (e) => {
   else if (k === 'amb') { settings.amb = +t.value; audio.setAmbientVolume(settings.amb); }
   else if (k === 'haptic') { settings.haptic = +t.value; Haptics.intensity = settings.haptic; Haptics.reset(); Haptics.seq([60]); }
   else if (t.type === 'checkbox') settings[k] = t.checked;
-  if (k === 'autoreload') syncAutoReload();
+  if (k === 'autoreload') { settings.reloadMode = t.checked ? 'auto' : 'manual'; delete settings.autoreload; syncAutoReload(); }
   if (k === 'infinite' && S.w) { S.ammo = S.w.capacity; renderAmmo(false); }
   if (k === 'weather') applyScene(settings.scene);
   saveSettings();
@@ -871,7 +888,7 @@ function route() {
     if (settings.torch) { settings.torch = false; Torch.disable(); syncToggles(); }
     audio.stopAmbient(); weather.stop();
     $('#view-sim').hidden = true; $('#view-armory').hidden = false;
-    document.title = 'Calibre — Gun Simulator & Field Manual · Vajra Games';
+    document.title = 'Calibre — Gun Simulator & Field Manual · Korvex Studios';
     keepAwake(false);
   }
   checkRotate();
@@ -893,7 +910,7 @@ function gate() {
 }
 
 // ------------------------------------------------------------------ boot
-// Splash: the Vajra mark draws in over ~0.5 s, names rise, then it fades.
+// Splash: the Korvex mark draws in over ~0.5 s, names rise, then it fades.
 const SPLASH_MS = 1150;
 setTimeout(() => { const sp = $('#splash'); sp.classList.add('done'); setTimeout(() => sp.remove(), 400); }, SPLASH_MS);
 buildFilters(); renderGrid(); renderHero(); syncToggles(); route(); gate();

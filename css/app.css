@@ -261,7 +261,11 @@ select { --cut: 6px; background: var(--panel-2); border: 0; box-shadow: inset 0 
 .ammo-strip.pistol .round { height: 24px; width: 10px; }
 .ammo-strip.shell .round { height: 34px; width: 14px; border-radius: 2px; background: linear-gradient(180deg, #b71c1c 0 72%, #d19c33 72%), linear-gradient(90deg, #7a1010, #e74c3c); }
 .ammo-strip.bmg .round { width: 15px; height: 44px; }
-.round.spent { opacity: 0.1; transform: translateY(4px); }
+.round.spent { animation: roundOut 0.16s ease-in forwards; }
+.round.in { animation: roundIn 0.22s cubic-bezier(.3,1.5,.5,1) backwards; }
+@keyframes roundOut { 40% { transform: translateY(-14px) rotate(8deg); opacity: 1; } to { transform: translateY(-22px) rotate(14deg) scale(0.6); opacity: 0; width: 0; margin-right: -3px; } }
+@keyframes roundIn { from { transform: translateY(18px); opacity: 0; } }
+.ammo { cursor: pointer; }
 .ammo-bar { width: min(340px, 44vw); height: 12px; background: var(--panel-3); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
 .ammo-bar i { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--brass) 0 6px, #6a4a10 6px 8px); transition: width 0.1s; }
 .ammo-meta { display: flex; gap: 12px; align-items: center; font-family: var(--f-mono); font-size: 12.5px; color: var(--muted); }
@@ -464,6 +468,11 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 .hero-feat .fstats .flags { margin: 0; }
 .mode.sim { border-style: dashed; }
 .mode.sim::after { content: '*'; color: var(--dim); margin-left: -4px; }
+.rmode { display: grid; gap: 3px; justify-items: center; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.14em; color: var(--dim); }
+.rmode > div { display: flex; box-shadow: inset 0 0 0 1px var(--line-2); }
+.rmode button { border: 0; background: var(--panel-2); color: var(--muted); font-family: var(--f-ui); font-weight: 700; font-size: 11.5px; letter-spacing: 0.08em; padding: 7px 9px; }
+.rmode button[aria-pressed='true'] { background: var(--acc); color: var(--acc-ink); }
+@media (max-height: 520px) { .rmode > span { display: none; } .rmode button { padding: 6px 7px; font-size: 10.5px; } }
 .autold { --cut: 8px; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); display: inline-flex; align-items: center; gap: 7px; height: 50px; padding: 0 11px; border: 0;
   background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); font-family: var(--f-mono); font-size: 10.5px; line-height: 1.15; text-align: left; letter-spacing: 0.08em; }
 .autold i { width: 10px; height: 10px; background: var(--dim); flex: none; }
@@ -472,7 +481,7 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 @media (max-height: 520px) { .autold { height: 40px; padding: 0 8px; font-size: 9.5px; } }
 @media (max-width: 720px) { .autold span { display: none; } .autold { padding: 0 12px; } }
 
-/* splash: vajra mark draws in (~0.5 s), studio + game names rise, then fades */
+/* splash: Korvex mark draws in (~0.5 s), studio + game names rise, then fades */
 .splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(ellipse at center, #0d1a12, #030506 70%); transition: opacity 0.35s, visibility 0.35s; }
 .splash.done { opacity: 0; visibility: hidden; pointer-events: none; }
 .splash-in { display: grid; justify-items: center; gap: 10px; }
@@ -480,7 +489,7 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 .splash-mark [pathLength] { stroke-dasharray: 1; stroke-dashoffset: 1; animation: vdraw 0.5s cubic-bezier(.6, 0, .3, 1) forwards; }
 .splash-mark .v-bolt [pathLength] { animation-delay: 0.08s; }
 .splash-mark .v-ticks { animation-delay: 0.25s !important; }
-.splash-mark .v-core { transform-origin: 32px 32px; transform: scale(0); animation: vcore 0.35s 0.35s cubic-bezier(.3, 1.6, .5, 1) forwards; }
+.splash-mark .v-core { transform-origin: 27px 32px; transform: scale(0); animation: vcore 0.35s 0.35s cubic-bezier(.3, 1.6, .5, 1) forwards; }
 @keyframes vdraw { to { stroke-dashoffset: 0; } }
 @keyframes vcore { to { transform: scale(1); } }
 .splash-mark { animation: vflash 0.5s 0.45s ease-out; }

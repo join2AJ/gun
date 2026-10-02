@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Calibre — Gun Simulator &amp; Field Manual · Vajra Games</title>
-  <meta name="description" content="Calibre by Vajra Games — Realistic gun sound simulator with per-weapon vibration and flashlight effects, plus a field manual of famous firearms — including Indian service weapons." />
+  <title>Calibre — Gun Simulator &amp; Field Manual · Korvex Studios</title>
+  <meta name="description" content="Calibre by Korvex Studios — Realistic gun sound simulator with per-weapon vibration and flashlight effects, plus a field manual of famous firearms — including Indian service weapons." />
   <meta name="theme-color" content="#06090b" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
@@ -37,14 +37,12 @@
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4"/></symbol>
       <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor"/></symbol>
       <symbol id="i-rotate" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 4h6a4 4 0 014 4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 6l2 2 2-2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
-      <symbol id="i-vajra" viewBox="0 0 64 64"><path class="v-hex" pathLength="1" d="M32 3 L57 17.5 L57 46.5 L32 61 L7 46.5 L7 17.5 Z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
-        <g class="v-bolt" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-          <path pathLength="1" d="M32 26 V9"/><path pathLength="1" d="M27 25 C19 21 20 12 32 9"/><path pathLength="1" d="M37 25 C45 21 44 12 32 9"/>
-          <path pathLength="1" d="M32 38 V55"/><path pathLength="1" d="M27 39 C19 43 20 52 32 55"/><path pathLength="1" d="M37 39 C45 43 44 52 32 55"/>
-          <path pathLength="1" d="M25.5 26 H38.5"/><path pathLength="1" d="M25.5 38 H38.5"/>
+      <symbol id="i-mark" viewBox="0 0 64 64"><path class="v-hex" pathLength="1" d="M32 4 L56 12 V31 C56 45 46 54 32 60 C18 54 8 45 8 31 V12 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <g class="v-bolt" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter">
+          <path pathLength="1" d="M22 17 V47"/><path pathLength="1" d="M41 17 L27 32 L41 47"/>
         </g>
-        <circle class="v-core" cx="32" cy="32" r="4.4" fill="currentColor"/>
-        <path class="v-ticks" pathLength="1" d="M7 32 H15 M49 32 H57" stroke="currentColor" stroke-width="2.5"/></symbol>
+        <path class="v-ticks" pathLength="1" d="M47 22 L37.5 32 L47 42" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square" opacity=".75"/>
+        <circle class="v-core" cx="27" cy="32" r="2.6" fill="#fff"/></symbol>
       <symbol id="i-bullet" viewBox="0 0 10 40"><path d="M5 0 Q10 8 9.4 14 L9.4 16 L0.6 16 L0.6 14 Q0 8 5 0Z" fill="#c26d3a"/><rect x="0.6" y="16" width="8.8" height="22" fill="#d6a84a"/><rect x="0" y="37" width="10" height="3" fill="#a07a2a"/></symbol>
       <symbol id="i-logo" viewBox="0 0 32 32"><path d="M16 2l12 7v14l-12 7-12-7V9z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 6v5M16 21v5M6 16h5M21 16h5" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="1.8" fill="currentColor"/></symbol>
     </defs>
@@ -53,15 +51,13 @@
   <!-- ============================== SPLASH ============================== -->
   <div class="splash" id="splash" aria-hidden="true">
     <div class="splash-in">
-      <svg class="splash-mark" viewBox="0 0 64 64"><path class="v-hex" pathLength="1" d="M32 3 L57 17.5 L57 46.5 L32 61 L7 46.5 L7 17.5 Z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
-        <g class="v-bolt" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-          <path pathLength="1" d="M32 26 V9"/><path pathLength="1" d="M27 25 C19 21 20 12 32 9"/><path pathLength="1" d="M37 25 C45 21 44 12 32 9"/>
-          <path pathLength="1" d="M32 38 V55"/><path pathLength="1" d="M27 39 C19 43 20 52 32 55"/><path pathLength="1" d="M37 39 C45 43 44 52 32 55"/>
-          <path pathLength="1" d="M25.5 26 H38.5"/><path pathLength="1" d="M25.5 38 H38.5"/>
+      <svg class="splash-mark" viewBox="0 0 64 64"><path class="v-hex" pathLength="1" d="M32 4 L56 12 V31 C56 45 46 54 32 60 C18 54 8 45 8 31 V12 Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <g class="v-bolt" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter">
+          <path pathLength="1" d="M22 17 V47"/><path pathLength="1" d="M41 17 L27 32 L41 47"/>
         </g>
-        <circle class="v-core" cx="32" cy="32" r="4.4" fill="currentColor"/>
-        <path class="v-ticks" pathLength="1" d="M7 32 H15 M49 32 H57" stroke="currentColor" stroke-width="2.5"/></svg>
-      <div class="splash-studio">VAJRA <span>GAMES</span></div>
+        <path class="v-ticks" pathLength="1" d="M47 22 L37.5 32 L47 42" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square" opacity=".75"/>
+        <circle class="v-core" cx="27" cy="32" r="2.6" fill="#fff"/></svg>
+      <div class="splash-studio">KORVEX <span>STUDIOS</span></div>
       <div class="splash-game wordmark">CAL<svg class="bi"><use href="#i-bullet"/></svg>BRE</div>
     </div>
   </div>
@@ -70,8 +66,8 @@
   <main id="view-armory" class="view" aria-label="Armory">
     <header class="arm-head">
       <div class="brand">
-        <svg class="brand-mark"><use href="#i-vajra"/></svg>
-        <div><h1 class="wordmark">CAL<svg class="bi"><use href="#i-bullet"/></svg>BRE</h1><p>Gun simulator · Field manual · <b>by Vajra Games</b></p></div>
+        <svg class="brand-mark"><use href="#i-mark"/></svg>
+        <div><h1 class="wordmark">CAL<svg class="bi"><use href="#i-bullet"/></svg>BRE</h1><p>Gun simulator · Field manual · <b>by Korvex Studios</b></p></div>
       </div>
       <button class="icon-btn" data-action="settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
     </header>
@@ -165,7 +161,7 @@
         <div class="ammo-meta"><span id="ammo-count">0 / 0</span><span id="ammo-cal"></span><span id="heat-wrap" title="Barrel heat"><b>HEAT</b><i class="heat"><i id="heat"></i></i></span></div>
       </div>
       <div class="hud-actions">
-        <button class="autold" data-action="autoreload" aria-pressed="true" title="Reload automatically when empty"><i></i><span>AUTO<br />LOAD</span></button>
+        <div class="rmode" role="group" aria-label="Reload mode"><span>RELOAD</span><div><button data-action="rmode" data-rmode="manual" aria-pressed="true" title="You reload by tapping RELOAD (or R)">MANUAL</button><button data-action="rmode" data-rmode="auto" aria-pressed="false" title="Reloads automatically when empty">AUTO</button></div></div>
         <button class="reload" data-action="reload" aria-label="Reload"><svg><use href="#i-reload"/></svg><span>Reload</span><i class="ring"></i></button>
         <button class="trigger" id="trigger" aria-label="Fire"><span>FIRE</span></button>
       </div>
@@ -224,7 +220,7 @@
 
   <div class="gate" id="gate" hidden>
     <div class="gate-card">
-      <svg class="gate-mark"><use href="#i-vajra"/></svg>
+      <svg class="gate-mark"><use href="#i-mark"/></svg>
       <h2>Calibre</h2>
       <p>Calibre uses sound, vibration and light to simulate gunfire.</p>
       <ul>

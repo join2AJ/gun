@@ -5,10 +5,10 @@
   </defs>
   <rect width="512" height="512" rx="108" fill="url(#bg)"/>
   <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
-  <g transform="translate(64 64) scale(6)" fill="none" stroke="#a3f53a" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M32 3 L57 17.5 L57 46.5 L32 61 L7 46.5 L7 17.5 Z" stroke-width="2.4"/>
-    <g stroke-width="2.6"><path d="M32 26 V9"/><path d="M27 25 C19 21 20 12 32 9"/><path d="M37 25 C45 21 44 12 32 9"/><path d="M32 38 V55"/><path d="M27 39 C19 43 20 52 32 55"/><path d="M37 39 C45 43 44 52 32 55"/><path d="M25.5 26 H38.5"/><path d="M25.5 38 H38.5"/></g>
-    <path d="M7 32 H15 M49 32 H57" stroke-width="2.4"/>
-    <circle cx="32" cy="32" r="4.4" fill="#ffffff" stroke="none"/>
+  <g transform="translate(64 64) scale(6)" fill="none" stroke="#a3f53a">
+    <path d="M32 4 L56 12 V31 C56 45 46 54 32 60 C18 54 8 45 8 31 V12 Z" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M22 17 V47 M41 17 L27 32 L41 47" stroke-width="4" stroke-linecap="square"/>
+    <path d="M47 22 L37.5 32 L47 42" stroke-width="2.6" stroke-linecap="square" opacity=".75"/>
+    <circle cx="27" cy="32" r="2.6" fill="#fff" stroke="none"/>
   </g>
 </svg>

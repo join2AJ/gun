@@ -1,6 +1,6 @@
 # CALIBRE — Gun Simulator & Field Manual
 
-*A Vajra Games title.* **Vajra Games** is the umbrella studio brand (the vajra is Indra's thunderbolt); its hexagon thunderbolt mark appears in the start-up animation and the app icon.
+*A Korvex Studios title.* **Korvex Studios** is the umbrella studio brand for this and future games. Its mark is a shield holding a chevron "K". It appears in the start-up animation and the app icon.
 
 A web-based gun sound simulator inspired by *Gun Sounds: Gun Simulator*, with stronger UI/UX and an
 educational layer. Fire 24 historic and modern weapons from WWI to today. Every shot is
@@ -23,8 +23,8 @@ No build step and no dependencies: plain HTML/CSS/ES modules, ready for Netlify.
 | **Flash** | Per-weapon muzzle flash shape (birdcage flower, brake side-blast, shotgun fireball, MG cone, compensator jets), colour, size and duration; matching flashlight (torch) pattern. |
 | **Environments** | Firing range, desert, Himalayan snow, jungle, urban, night, indoor — each changes backdrop, echo, ground surface, weather particles, ambient sound and shows the gun's reliability there. |
 | **Fire modes** | Real modes plus a trigger-controlled burst on every automatic weapon (marked *) and a hold-to-repeat **Rapid** mode on semi-auto, bolt and pump guns. |
-| **Reload** | Animated: the empty magazine drops and tumbles to the ground with a landing sound, a fresh one slides in and the bolt or slide is racked. Clips are pressed in from the top, shells go into the tube one by one and belts are swapped. Pistol slides lock back when empty. A HUD **AUTO LOAD** switch reloads automatically. |
-| **Splash** | The Vajra mark draws in (~0.5 s), then VAJRA GAMES and the CALIBRE wordmark appear. `SPLASH_MS` in `js/app.js` sets the total time. |
+| **Reload** | MANUAL / AUTO switch on the HUD (manual by default). Each fired round pops out of the ammo strip, and the strip refills round by round on reload. Animated: the empty magazine drops and tumbles to the ground with a landing sound, a fresh one slides in and the bolt or slide is racked. Clips are pressed in from the top, shells go into the tube one by one and belts are swapped. Pistol slides lock back when empty. |
+| **Splash** | The Korvex mark draws in (~0.5 s), then KORVEX STUDIOS and the CALIBRE wordmark appear. `SPLASH_MS` in `js/app.js` sets the total time. |
 | **Heat** | Barrel heat builds with sustained fire and cools over time; a hot barrel smokes. |
 | **Landscape-first** | Designed for a sideways phone; prompts to rotate in portrait (with a portrait fallback). Fullscreen + landscape lock. |
 | **PWA** | Installable, offline, wake lock. |
