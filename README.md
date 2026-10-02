@@ -9,6 +9,8 @@ flashlight**. A field manual explains how each weapon works, where it was used, 
 
 No build step and no dependencies: plain HTML/CSS/ES modules, ready for Netlify.
 
+> **Version & history:** see [`CHANGELOG.md`](CHANGELOG.md). Every change is recorded there, `version.json` holds the current version, and each release is tagged `vX.Y.Z`. Release and rollback steps are in [`docs/RELEASING.md`](docs/RELEASING.md).
+
 ## Features
 
 | | |

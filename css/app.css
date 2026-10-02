@@ -562,3 +562,5 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 .reload svg { flex: none; }
 .ammo-strip { min-width: 0; }
 @media (min-width: 1100px) and (max-width: 1560px) { .ammo-strip { gap: 2px; max-width: 24vw; } .round { width: 6px; } .ammo-strip.pistol .round, .ammo-strip.bmg .round { width: 9px; } }
+
+.set-version { font-family: var(--f-mono); font-size: 12px; color: var(--dim); margin: 6px 0 0; letter-spacing: 0.06em; }

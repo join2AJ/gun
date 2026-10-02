@@ -1,0 +1,20 @@
+name: Changelog & version check
+
+# Every code change must be recorded in CHANGELOG.md, and version.json must
+# match a CHANGELOG section (see docs/RELEASING.md).
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then BASE="origin/${{ github.base_ref }}";
+          elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then BASE="${{ github.event.before }}";
+          else BASE="HEAD~1"; fi
+          scripts/check-changelog.sh "$BASE"

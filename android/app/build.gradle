@@ -2,6 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
+// Single source of truth for the version: ../version.json (see CHANGELOG.md).
+def appVersion = new groovy.json.JsonSlurper().parse(rootProject.file('../version.json'))
+
 // Release signing: android/keystore.properties (local, git-ignored) or env vars (CI).
 def ksProps = new Properties()
 def ksFile = rootProject.file('keystore.properties')
@@ -16,9 +19,9 @@ android {
         applicationId 'com.artinstudios.calibre'
         minSdk 26 // Android 8.0+: VibrationEffect (amplitude vibration) needs API 26
         targetSdk 36
-        // Bump versionCode for every Play upload (or pass -PversionCode=N in CI).
-        versionCode((project.findProperty('versionCode') ?: '2') as int)
-        versionName project.findProperty('versionName') ?: '1.1.0'
+        // From version.json — bump it (and CHANGELOG.md) for every release; -PversionCode=N overrides.
+        versionCode((project.findProperty('versionCode') ?: appVersion.versionCode) as int)
+        versionName project.findProperty('versionName') ?: appVersion.version
         // AdMob IDs: set admobAppId / admobBanner / admobRewarded in android/gradle.properties.
         // Until then Google's official TEST ids are used (safe to click, no revenue).
         manifestPlaceholders = [admobAppId: (project.findProperty('admobAppId') ?: 'ca-app-pub-3940256099942544~3347511713')]
@@ -71,7 +74,7 @@ dependencies {
 // Copy the web game (repo root) into the APK as offline assets/www.
 def syncWeb = tasks.register('syncWeb', Sync) {
     from(rootProject.file('..')) {
-        include 'index.html', 'privacy.html', 'css/**', 'js/**', 'fonts/**', 'icons/**', 'manifest.webmanifest'
+        include 'index.html', 'privacy.html', 'version.json', 'css/**', 'js/**', 'fonts/**', 'icons/**', 'manifest.webmanifest'
     }
     into layout.buildDirectory.dir('generated/web/www')
 }
