@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Arsenal — Gun Simulator &amp; Field Guide</title>
+  <meta name="description" content="Realistic gun sound simulator with vibration, flashlight muzzle flash and a field guide to famous firearms from WWI to today." />
+  <meta name="theme-color" content="#0d0f11" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <!-- icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="currentColor"/></symbol>
+      <symbol id="i-star-o" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 13.5l1.6 1.2-1.8 3.1-1.9-.7a7 7 0 01-1.7 1l-.3 2h-3.6l-.3-2a7 7 0 01-1.7-1l-1.9.7-1.8-3.1 1.6-1.2a7 7 0 010-2l-1.6-1.2 1.8-3.1 1.9.7a7 7 0 011.7-1l.3-2h3.6l.3 2a7 7 0 011.7 1l1.9-.7 1.8 3.1-1.6 1.2a7 7 0 010 2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+      <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-vibe" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 8v8M20 8v8M1.5 10v4M22.5 10v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-flash" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></symbol>
+      <symbol id="i-torch" viewBox="0 0 24 24"><path d="M7 2h10v4l-2 4v11a1 1 0 01-1 1h-4a1 1 0 01-1-1V10L7 6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 13v3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+      <symbol id="i-shake" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="2" transform="rotate(-12 12 12)" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 7l-1 3M21 14l1 3M4 15l-1 2M20 6l1-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 12a8 8 0 11-2.3-5.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- ============================== ARMORY ============================== -->
+  <main id="view-armory" class="view" aria-label="Armory">
+    <header class="arm-head">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-target"/></svg>
+        <div>
+          <h1>ARSENAL</h1>
+          <p>Gun simulator &amp; field guide</p>
+        </div>
+      </div>
+      <button class="icon-btn" data-action="settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">1891 → 2011 · <span id="stat-count">24</span> weapons · <span id="stat-countries">9</span> nations</span>
+        <h2>Hear it. Feel it. <em>Understand it.</em></h2>
+        <p>Fire legendary weapons from the trenches of WWI to modern battlefields. Every shot is synthesised live and mirrored through your phone's vibration motor and flashlight — then learn how each mechanism actually works.</p>
+      </div>
+      <div class="hero-feat" id="hero-feat"></div>
+    </section>
+
+    <section class="filters" aria-label="Filters">
+      <label class="search">
+        <svg><use href="#i-search"/></svg>
+        <input id="q" type="search" placeholder="Search weapons, wars, countries, calibres…" autocomplete="off" />
+      </label>
+      <div class="seg" id="era-tabs" role="tablist" aria-label="Era"></div>
+      <div class="row">
+        <div class="chips" id="type-chips" role="group" aria-label="Type"></div>
+        <div class="row-end">
+          <button class="chip chip-fav" id="fav-only" aria-pressed="false"><svg><use href="#i-star"/></svg>Favorites</button>
+          <select id="sort" aria-label="Sort">
+            <option value="year">Sort: Year</option>
+            <option value="name">Sort: Name</option>
+            <option value="country">Sort: Country</option>
+            <option value="recoil">Sort: Recoil</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section id="grid" class="grid" aria-live="polite"></section>
+    <p class="empty" id="empty" hidden>No weapons match those filters.</p>
+
+    <footer class="foot">
+      <p>Sounds are synthesised approximations for entertainment &amp; education. Specs are typical published values and vary by variant. Always follow firearm safety laws in your country.</p>
+    </footer>
+  </main>
+
+  <!-- ============================== SIMULATOR ============================== -->
+  <main id="view-sim" class="view" hidden aria-label="Simulator">
+    <header class="sim-top">
+      <div class="sim-left">
+        <button class="icon-btn" data-action="back" aria-label="Back to armory"><svg><use href="#i-back"/></svg></button>
+        <button class="icon-btn" data-action="info" aria-label="Field manual"><svg><use href="#i-info"/></svg></button>
+        <button class="icon-btn fav" data-action="fav" aria-label="Favorite"><svg><use href="#i-star-o"/></svg></button>
+      </div>
+      <div class="sim-title">
+        <h1 id="w-name">—</h1>
+        <p id="w-meta"></p>
+      </div>
+      <div class="sim-right" role="toolbar" aria-label="Effects">
+        <button class="tog" data-tog="sound" aria-label="Sound" title="Sound"><svg><use href="#i-sound"/></svg></button>
+        <button class="tog" data-tog="vibrate" aria-label="Vibration" title="Vibration"><svg><use href="#i-vibe"/></svg></button>
+        <button class="tog" data-tog="flash" aria-label="Screen flash" title="Screen flash"><svg><use href="#i-flash"/></svg></button>
+        <button class="tog" data-tog="torch" aria-label="Flashlight" title="Camera flashlight"><svg><use href="#i-torch"/></svg></button>
+        <button class="tog" data-tog="shake" aria-label="Shake to fire" title="Shake to fire"><svg><use href="#i-shake"/></svg></button>
+        <span class="divider"></span>
+        <button class="icon-btn" data-action="settings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+        <button class="icon-btn" data-action="fullscreen" aria-label="Fullscreen"><svg><use href="#i-full"/></svg></button>
+      </div>
+    </header>
+
+    <div class="sim-body">
+      <section class="stage" id="stage">
+        <div class="stage-bg"></div>
+        <div class="gun-wrap" id="gun-wrap"></div>
+        <canvas id="fx" class="fx"></canvas>
+        <button class="nav prev" data-action="prev" aria-label="Previous weapon"><svg><use href="#i-back"/></svg></button>
+        <button class="nav next" data-action="next" aria-label="Next weapon"><svg><use href="#i-next"/></svg></button>
+        <div class="hint" id="hint">Tap &amp; hold the weapon to fire</div>
+        <div class="reload-banner" id="reload-banner" hidden>EMPTY — tap <b>Reload</b></div>
+        <div class="feel" id="feel"></div>
+      </section>
+
+      <section class="hud">
+        <div class="modes" id="modes" role="radiogroup" aria-label="Fire mode"></div>
+        <div class="ammo">
+          <div class="ammo-strip" id="ammo-strip"></div>
+          <div class="ammo-meta"><span id="ammo-count">0 / 0</span><span id="ammo-cal"></span></div>
+        </div>
+        <div class="hud-actions">
+          <button class="reload" data-action="reload" aria-label="Reload"><svg><use href="#i-reload"/></svg><span>Reload</span><i class="ring"></i></button>
+          <button class="trigger" id="trigger" aria-label="Fire"><span>FIRE</span></button>
+        </div>
+      </section>
+
+      <aside class="manual" id="manual" aria-label="Field manual">
+        <div class="manual-handle" data-action="info"></div>
+        <header class="manual-head">
+          <h2>Field manual</h2>
+          <button class="icon-btn sm" data-action="info" aria-label="Close"><svg><use href="#i-close"/></svg></button>
+        </header>
+        <nav class="tabs" id="tabs" role="tablist">
+          <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+          <button role="tab" data-tab="how">Mechanism</button>
+          <button role="tab" data-tab="specs">Specs</button>
+          <button role="tab" data-tab="feel">Feel</button>
+        </nav>
+        <div class="tab-body" id="tab-body"></div>
+      </aside>
+    </div>
+    <div class="flash-overlay" id="flash-overlay"></div>
+  </main>
+
+  <!-- ============================== SETTINGS ============================== -->
+  <dialog id="settings" class="sheet">
+    <form method="dialog">
+      <header><h2>Settings</h2><button class="icon-btn sm" value="close" aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+      <div class="set-grid">
+        <label class="set"><span>Volume</span><input type="range" id="s-volume" min="0" max="1" step="0.05" /></label>
+        <label class="set"><span>Environment</span><select id="s-env"></select></label>
+        <label class="set"><span>Vibration strength</span><input type="range" id="s-haptic" min="0.3" max="1.6" step="0.1" /></label>
+        <label class="set sw"><span>Infinite ammo</span><input type="checkbox" id="s-infinite" /></label>
+        <label class="set sw"><span>Auto reload when empty</span><input type="checkbox" id="s-autoreload" /></label>
+        <label class="set sw"><span>Recoil &amp; camera shake</span><input type="checkbox" id="s-recoil" /></label>
+        <label class="set sw"><span>Shell casings &amp; smoke</span><input type="checkbox" id="s-particles" /></label>
+        <label class="set sw"><span>Reduce flashing (photosensitivity)</span><input type="checkbox" id="s-softflash" /></label>
+      </div>
+      <p class="set-note" id="cap-note"></p>
+      <p class="set-keys"><b>Keyboard:</b> <kbd>Space</kbd> fire · <kbd>R</kbd> reload · <kbd>M</kbd> mode · <kbd>←</kbd><kbd>→</kbd> switch · <kbd>I</kbd> manual · <kbd>F</kbd> fullscreen</p>
+    </form>
+  </dialog>
+
+  <!-- ============================== FIRST RUN ============================== -->
+  <div class="gate" id="gate" hidden>
+    <div class="gate-card">
+      <svg class="gate-mark" viewBox="0 0 24 24"><use href="#i-target"/></svg>
+      <h2>Ready the range</h2>
+      <p>Arsenal uses sound, vibration and light to simulate gunfire.</p>
+      <ul>
+        <li><svg><use href="#i-sound"/></svg><span>Turn your volume up — headphones recommended.</span></li>
+        <li><svg><use href="#i-vibe"/></svg><span>Vibration works on Android browsers.</span></li>
+        <li><svg><use href="#i-torch"/></svg><span>The camera flashlight can flash with each shot (asks for camera permission, Chrome on Android).</span></li>
+        <li><svg><use href="#i-flash"/></svg><span>Contains rapid flashing lights. Enable “Reduce flashing” in settings if you are photosensitive.</span></li>
+      </ul>
+      <button class="btn-primary" id="gate-go">Enter the range</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
