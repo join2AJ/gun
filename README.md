@@ -11,18 +11,19 @@ No build step and no dependencies: plain HTML/CSS/ES modules, ready for Netlify.
 
 | | |
 |---|---|
-| **Armory** | Filter by era (WWI, WWII, Cold War, Modern), type and favorites. Search across names, wars, countries and calibres. Sort by year, name, country or recoil. |
-| **Simulator** | Tap & hold the weapon or the FIRE button. Only real fire modes are offered for each gun: single, burst, auto, bolt action or pump action. |
-| **Sound engine** | Web Audio layers per shot: supersonic crack, muzzle blast, body thump, low rumble and action noise, plus reverb. Choose from 5 environments (range, field, indoor, canyon, city). |
-| **Haptics** | Each gun has its own vibration waveform built from its sound profile (blast, then echo decay, then action kick). Pulse-width modulation fakes vibration strength. Auto fire pulses once per round. |
-| **Light** | The screen flash is centred on the muzzle. The phone's camera LED flashes with each shot (Chrome on Android). |
-| **Physics FX** | Recoil and muzzle rise scaled to the real recoil rating. Shell casings eject and bounce, with smoke, sparks and side-blast dust from the Barrett muzzle brake. |
-| **Details** | The M1 Garand clip makes its *PING*. Bolt and pump actions cycle after every shot. The minigun spins up and down. Belt-fed guns use belts. Shotguns load shell by shell. |
-| **Shake to fire** | Shake the phone to fire, using the accelerometer. |
-| **Field manual** | Overview, service history, conflicts, trivia, step-by-step mechanism walkthrough, specs and feel meters. |
-| **PWA** | Installable, works offline, runs fullscreen and locks to landscape when supported. |
+| **39 weapons** | WWI to today, including Indian service & origin: INSAS rifle & LMG, AK-203, Pistol Auto 9mm 1A, Ishapore 2A1, Vidhwansak, ASMI, Bren, plus Tavor, Negev NG7, SIG716i, F2000, P90, Galil Sniper, M249, PKM and more. |
+| **Filters** | Era, type (pistol, SMG, rifle, sniper/AMR, LMG, MG/GPMG, shotgun), **used by** (Army, Navy, Air Force, Special Forces, SPG, NSG, Para SF, MARCOS, Garud, Police/CAPF), Indian service & origin, favorites, search, sort by year/range/power/fire rate/recoil. |
+| **Key points** | Effective range vs max bullet travel, rounds per load, bullet size **drawn to scale**, bullet weight, muzzle energy & velocity, accuracy, rate of fire, heat behaviour, and reliability in desert / snow / jungle / mud / high altitude. Live "Intel" panel while shooting. |
+| **Sound** | Each gun's shot is pre-rendered (Web Audio, OfflineAudioContext) from layers: muzzle impulse, supersonic N-wave crack, blast, body boom, brake blast and an action sound per operating system (AK carrier slam, AR buffer "sproing", HK roller clack, pistol slide…). |
+| **Casings** | Spent cases bounce and ring when they land, pitched by case length; concrete rings, sand and snow just thud; steel cases sound duller; shotgun hulls clunk. |
+| **Vibration** | Built from each gun's *actual* sound envelope + a recoil kick — every weapon feels different. Shown as a waveform in the Feel tab. |
+| **Flash** | Per-weapon muzzle flash shape (birdcage flower, brake side-blast, shotgun fireball, MG cone, compensator jets), colour, size and duration; matching flashlight (torch) pattern. |
+| **Environments** | Firing range, desert, Himalayan snow, jungle, urban, night, indoor — each changes backdrop, echo, ground surface, weather particles, ambient sound and shows the gun's reliability there. |
+| **Heat** | Barrel heat builds with sustained fire and cools over time; a hot barrel smokes. |
+| **Landscape-first** | Designed for a sideways phone; prompts to rotate in portrait (with a portrait fallback). Fullscreen + landscape lock. |
+| **PWA** | Installable, offline, wake lock. |
 
-Keyboard: `Space` fire · `R` reload · `M` mode · `←/→` switch · `I` manual · `F` fullscreen · `Esc` back.
+Keyboard: `Space` fire · `R` reload · `M` mode · `←/→` switch · `E` environment · `I` manual · `F` fullscreen · `Esc` back.
 
 ## Project structure
 
@@ -32,7 +33,8 @@ css/app.css           Design tokens and responsive layout (desktop, landscape ph
 js/data.js            Weapon database: history, mechanism, specs, sound/feel profile, art spec
 js/render.js          Procedural SVG renderer that builds each gun from parts (stock, receiver, mag…)
 js/audio.js           Synthesised gunfire engine and environments
-js/fx.js              Haptics (vibration), torch (flashlight) and canvas particles
+js/fx.js              Haptics (from sound envelope), torch patterns, particles, weather
+js/scenes.js          Environment backdrops (SVG) + acoustics/ground/weather settings
 js/app.js             Routing, armory, firing scheduler, reload/cycle logic and field manual
 sw.js, manifest…      PWA offline support
 dev/gallery.html      Art preview of every weapon (for tuning render specs)
@@ -43,7 +45,8 @@ dev/gallery.html      Art preview of every weapon (for tuning render specs)
 Add an entry to `WEAPONS` in `js/data.js`. Copy a similar weapon and adjust:
 
 - `modes`, `rpm`, `capacity` and `ammo` (`pistol`, `rifle`, `belt`, `shell` or `bmg`) control the gameplay.
-- `sound` holds `power`, `crack`, `decay`, `thump`, `bright`, `tail` and `mech`. These drive the audio and also the vibration.
+- `sound` holds `power`, `crack`, `decay`, `thump`, `bright`, `tail`, `mech` (slide, gas, ak, ar, roller, garand, heavy, bolt…) and `steel`. These drive the audio and therefore the vibration.
+- Key points: `mv`, `eff`, `max`, `bulletG`, `moa`, `heat`, `heatNote`, `env` [desert, snow, jungle, mud, altitude], `users`, `cart` (see `CARTS`).
 - `art` is the parts spec for the SVG renderer. Open `/dev/gallery.html` to preview it.
 
 ## Run locally

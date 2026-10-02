@@ -73,7 +73,8 @@ class Builder {
     this.out.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`);
   }
   raw(s) { this.out.push(s); }
-  defs() {
+  hole(cx, cy, rx, ry) { this.out.push(`<ellipse cx="${cx}" cy="${cy * this.k}" rx="${rx}" ry="${ry * this.k}" fill="#06080a" opacity=".92"/>`); }
+  defs(fc = ['#ffffff', '#fff6c8', '#ffb43a', '#ff5a00']) {
     let s = '';
     for (const m of this.used) {
       if (m === 'grain') continue;
@@ -87,8 +88,8 @@ class Builder {
         <path d="M0 3 Q22 1 45 4 T90 3 M0 9 Q30 11 60 8 T90 10" fill="none" stroke="#2a1505" stroke-width=".8" opacity=".55"/></pattern>`;
     }
     s += `<radialGradient id="${this.uid}-flash" cx="0" cy=".5" r="1">
-        <stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".18" stop-color="#fff6c8"/>
-        <stop offset=".45" stop-color="#ffb43a" stop-opacity=".9"/><stop offset="1" stop-color="#ff5a00" stop-opacity="0"/></radialGradient>`;
+        <stop offset="0" stop-color="${fc[0]}" stop-opacity="1"/><stop offset=".22" stop-color="${fc[1]}"/>
+        <stop offset=".5" stop-color="${fc[2]}" stop-opacity=".85"/><stop offset="1" stop-color="${fc[2]}" stop-opacity="0"/></radialGradient>`;
     return `<defs>${s}</defs>`;
   }
 }
@@ -253,6 +254,18 @@ function drawMag(b, m, rec) {
       b.rect(x, top, L, w, mat, w / 2);
       break;
     }
+    case 'top': { // Bren: curved magazine standing up out of the receiver
+      const c = m.curve ?? 40, y = rec.top + 4;
+      b.path(`M${x} ${y} L${x + w} ${y} Q${x + w + c * 0.3} ${y - L * 0.6} ${x + w + c} ${y - L} L${x + c - 6} ${y - L - 4} Q${x + c * 0.2} ${y - L * 0.6} ${x} ${y} Z`, mat);
+      for (let i = 1; i < 4; i++) { const t = i / 4, xx = x + c * t * t; b.line(xx + 4, y - L * t, xx + w - 2, y - L * t, 'rgba(255,255,255,.1)', 2); }
+      break;
+    }
+    case 'p90': { // P90: translucent magazine lying along the top
+      const y = rec.top;
+      b.path(`M${x} ${y} L${x + 10} ${y - 26} L${x + w - 10} ${y - 26} L${x + w} ${y} Z`, 'clear');
+      for (let xx = x + 22; xx < x + w - 20; xx += 15) b.rect(xx, y - 20, 9, 14, 'brass', 2, 'opacity=".55"');
+      break;
+    }
     case 'gripmag': {
       b.rect(x, top, w, 10, mat, 2);
       break;
@@ -385,6 +398,12 @@ function drawOptic(b, o) {
       b.rect((x0 + x1) / 2 - 30, y - 26, 24, 16, m, 3);
       b.rect((x0 + x1) / 2 + 2, y - 26, 20, 16, m, 3);
       b.rect(x0 + 20, y + 10, x1 - x0 - 60, (o.base ?? -18) - y - 10, 'blued', 2);
+      break;
+    }
+    case 'f2000': {
+      const { x0, x1 } = o;
+      b.path(`M${x0} -32 Q${x0 + 10} -58 ${x0 + 50} -60 L${x1 - 30} -60 Q${x1} -58 ${x1} -32 Z`, 'poly');
+      b.rect(x1 - 70, -52, 60, 14, 'dark', 6);
       break;
     }
     case 'aug': { // integral 1.5x optic / carry handle
@@ -521,6 +540,66 @@ function drawRotary(b, a) {
   return br.x1 + 4;
 }
 
+// ---------- muzzle flash profile (shape, colour, size, duration, torch pattern) per weapon
+const FLASH_COLORS = {
+  pistol: ['#fff3c8', '#ffb347', '#ff6a00'],
+  hot: ['#ffffff', '#fff2a8', '#ffb627'],     // 5.56 / modern powders: white-yellow
+  full: ['#fff8d8', '#ffc45c', '#ff7a1a'],    // full-power rifle
+  russian: ['#fff1c2', '#ff9f3a', '#ff4d0a'], // 7.62 Soviet ammo — big orange flash
+  shotgun: ['#fff0c0', '#ff8c2a', '#e0400a'],
+  heavy: ['#ffffff', '#ffd27a', '#ff8a1a'],
+};
+export function flashProfile(w) {
+  const a = w.art, p = w.sound;
+  const mz = a.muzzle?.style ?? (a.kind === 'pistol' ? 'pistol' : 'none');
+  const barrel = a.barrel ? a.barrel.x1 - a.barrel.x0 : 0;
+  let shape = { flash: 'cage', bayonetlug: 'star', none: 'star', brake: 'brake', comp: 'comp', cutts: 'comp', ak: 'comp', cone: 'cone' }[mz] ?? 'star';
+  if (a.kind === 'pistol') shape = 'pistol';
+  if (a.kind === 'rotary') shape = 'cage';
+  if (w.ammo === 'shell') shape = 'ball';
+  let color = FLASH_COLORS.full;
+  if (w.ammo === 'pistol' || a.kind === 'pistol') color = FLASH_COLORS.pistol;
+  if (/556|57x28/.test(w.cart)) color = FLASH_COLORS.hot;
+  if (/762x39|762x54r|762x25/.test(w.cart)) color = FLASH_COLORS.russian;
+  if (w.ammo === 'shell') color = FLASH_COLORS.shotgun;
+  if (/50bmg|145/.test(w.cart)) color = FLASH_COLORS.heavy;
+  let size = 0.8 + p.power * 1.1;
+  if (a.kind === 'long' && barrel && barrel < 260) size *= 1.25; // short barrels burn powder outside the muzzle
+  if (shape === 'cage') size *= 0.62;                             // flash hiders work
+  if (shape === 'pistol') size = 0.6 + p.power * 0.5;
+  if (shape === 'ball') size = 1.6;
+  let dur = Math.round(28 + p.power * 70);
+  if (shape === 'cage') dur = Math.round(dur * 0.7);
+  if (shape === 'ball') dur = 115;
+  if (shape === 'brake') dur = 150;
+  if (shape === 'pistol') dur = 38 + Math.round(p.power * 30);
+  const torch = shape === 'brake' ? [dur, 45, 55] : shape === 'ball' ? [dur + 30] : shape === 'cone' ? [dur, 30, 30] : [Math.max(40, dur)];
+  return { shape, color, size, dur, torch, screen: Math.min(0.85, 0.2 + p.power * 0.55 + (shape === 'ball' ? 0.15 : 0) - (shape === 'cage' ? 0.12 : 0)) };
+}
+
+function flashShape(uid, fp) {
+  const [c0, c1] = fp.color;
+  const g = `url(#${uid}-flash)`;
+  switch (fp.shape) {
+    case 'cage': return `<ellipse cx="34" cy="0" rx="46" ry="16" fill="${g}"/>
+      <path d="M0 0 L46 -22 L30 -2 L70 0 L30 2 L46 22 Z M0 0 L30 -34 L20 -2 Z M0 0 L30 34 L20 2 Z" fill="${c1}" opacity=".85"/><circle cx="6" cy="0" r="10" fill="${c0}"/>`;
+    case 'brake': return `<ellipse cx="-30" cy="0" rx="40" ry="70" fill="${g}" opacity=".9"/>
+      <path d="M-40 -6 L-70 -80 L-20 -10 Z M-40 6 L-70 80 L-20 10 Z M-10 -6 L-30 -70 L4 -8 Z M-10 6 L-30 70 L4 8 Z" fill="${c1}" opacity=".9"/>
+      <ellipse cx="40" cy="0" rx="60" ry="22" fill="${g}"/><path d="M0 -5 L80 0 L0 5 Z" fill="${c0}"/><circle cx="-24" cy="0" r="18" fill="${c0}" opacity=".9"/>`;
+    case 'ball': return `<circle cx="60" cy="0" r="62" fill="${g}"/><circle cx="40" cy="0" r="36" fill="${c1}" opacity=".85"/>
+      <path d="M0 -8 L110 -30 L80 0 L110 30 L0 8 Z" fill="${c1}" opacity=".7"/><circle cx="16" cy="0" r="20" fill="${c0}"/>`;
+    case 'cone': return `<ellipse cx="80" cy="0" rx="110" ry="26" fill="${g}"/><path d="M0 -14 L150 0 L0 14 Z" fill="${c1}" opacity=".9"/>
+      <path d="M0 -6 L90 0 L0 6 Z" fill="${c0}"/><circle cx="6" cy="0" r="14" fill="${c0}"/>`;
+    case 'comp': return `<ellipse cx="50" cy="0" rx="70" ry="28" fill="${g}"/>
+      <path d="M-4 -4 L20 -60 L22 -6 Z M10 -4 L40 -52 L36 -4 Z" fill="${c1}" opacity=".9"/>
+      <path d="M0 -6 L80 -18 L60 0 L90 4 L0 6 Z" fill="${c1}" opacity=".9"/><circle cx="8" cy="0" r="13" fill="${c0}"/>`;
+    case 'pistol': return `<ellipse cx="40" cy="0" rx="56" ry="22" fill="${g}"/><path d="M0 -5 L56 -16 L40 -2 L74 0 L40 2 L56 16 L0 5 Z" fill="${c1}" opacity=".9"/><circle cx="6" cy="0" r="10" fill="${c0}"/>`;
+    default: return `<ellipse cx="60" cy="0" rx="85" ry="34" fill="${g}"/>
+      <path d="M0 -6 L70 -26 L46 -4 L120 0 L46 4 L70 26 L0 6 Z" fill="${c0}" opacity=".95"/>
+      <path d="M6 -3 L40 -40 L30 -2 Z M6 3 L40 40 L30 2 Z" fill="${c1}" opacity=".85"/><circle cx="8" cy="0" r="14" fill="${c0}"/>`;
+  }
+}
+
 /**
  * Render a weapon to an SVG string.
  * opts.fx = true adds a muzzle-flash group (hidden) for the simulator stage.
@@ -537,19 +616,14 @@ export function renderWeapon(w, opts = {}) {
   const pad = 14;
   const vx = b.x0 - pad, vy = b.y0 - pad, vw = b.x1 - b.x0 + pad * 2, vh = b.y1 - b.y0 + pad * 2;
   let fx = '';
+  const fp = flashProfile(w);
   if (opts.fx) {
-    const s = (0.7 + (w.sound?.power ?? 0.5) * 1.1) * (a.kind === 'pistol' ? 0.6 : Math.max(1, b.k * 0.8));
-    fx = `<g class="flash" transform="translate(${mx} 0)" opacity="0">
-      <g class="flash-inner" transform="scale(${s})">
-        <ellipse cx="60" cy="0" rx="85" ry="34" fill="url(#${uid}-flash)"/>
-        <path d="M0 -6 L70 -26 L46 -4 L120 0 L46 4 L70 26 L0 6 Z" fill="#fff4c2" opacity=".95"/>
-        <path d="M6 -3 L40 -40 L30 -2 Z M6 3 L40 40 L30 2 Z" fill="#ffc35a" opacity=".85"/>
-        <circle cx="8" cy="0" r="14" fill="#fff"/>
-      </g></g>`;
+    const s = fp.size * (a.kind === 'pistol' ? 1 : Math.max(1, b.k * 0.8));
+    fx = `<g class="flash" transform="translate(${mx} 0)" opacity="0"><g class="flash-inner" data-s="${s.toFixed(2)}" transform="scale(${s.toFixed(2)})">${flashShape(uid, fp)}</g></g>`;
   }
   const ej = a.eject ?? { x: (a.rec?.x0 ?? 0) + 40, y: -10 };
-  const meta = { muzzle: { x: mx, y: 0 }, eject: { x: ej.x, y: ej.y * b.k }, grip: a.grip?.x ?? a.rec?.x0 ?? 0, box: [vx, vy, vw, vh] };
+  const meta = { flash: fp, ejectDir: a.ejectDir ?? -1, ejectDown: !!a.ejectDown, muzzle: { x: mx, y: 0 }, eject: { x: ej.x, y: ej.y * b.k }, grip: a.grip?.x ?? a.rec?.x0 ?? 0, box: [vx, vy, vw, vh] };
   const svg = `<svg class="weapon-svg" viewBox="${vx} ${vy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${w.name}" overflow="visible">
-    ${b.defs()}<g class="gun-body">${b.out.join('')}</g>${fx}</svg>`;
+    ${b.defs(fp.color)}<g class="gun-body">${b.out.join('')}</g>${fx}</svg>`;
   return { svg, meta };
 }
