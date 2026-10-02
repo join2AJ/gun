@@ -260,7 +260,7 @@ function renderAmmo(full) {
   }
   else strip.querySelector('.ammo-bar i').style.width = `${(S.ammo / w.capacity) * 100}%`;
   const c = $('#ammo-count');
-  c.textContent = settings.infinite ? '∞' : `${S.ammo} / ${w.capacity}`;
+  c.innerHTML = `${S.ammo} / ${w.capacity}${settings.infinite ? ' <b class="inf">∞ INFINITE</b>' : ''}`;
   c.classList.toggle('low', !settings.infinite && S.ammo <= Math.ceil(w.capacity * 0.2));
 }
 function renderHeat() { $('#heat').style.width = `${Math.round(S.heat * 100)}%`; }
@@ -309,7 +309,9 @@ function tick() {
   const w = S.w, gap = minGap(), now = audio.now, rapid = (w.rpm ?? 0) >= 900;
   while (S.remaining > 0 && S.nextT < now + 0.06) {
     if (!hasAmmo()) { stopFiring(); emptyClick(); return; }
-    if (!settings.infinite) S.ammo--;
+    S.ammo--;
+    // infinite ammo still drains the strip so you see every shot, then refills instantly
+    if (settings.infinite && S.ammo <= 0) S.ammo = w.capacity;
     const t = S.nextT;
     audio.shot(w, t, { rapid });
     S.queue.push({ t, rapid, last: !settings.infinite && S.ammo === 0, gap });
@@ -452,7 +454,7 @@ function frame(ts) {
 // ------------------------------------------------------------------ reload
 function reload() {
   const w = S.w;
-  if (S.reloading || settings.infinite || S.ammo === w.capacity) return;
+  if (S.reloading || S.ammo === w.capacity) return;
   stopFiring();
   const tok = S.token;
   const dur = w.ammo === 'shell' ? Math.min(3.2, 0.6 + (w.capacity - S.ammo) * 0.4)
@@ -762,7 +764,7 @@ function hapticSvg(w) {
   pat.forEach((d, i) => { const wd = (d / total) * 300; if (i % 2 === 0) out += `<rect x="${x}" y="6" width="${Math.max(1.5, wd)}" height="26" fill="#a3f53a"/>`; x += wd; });
   let env = '';
   if (S.bank) { const e = S.bank.envelope, n = Math.min(e.length, Math.ceil(total / S.bank.frameMs)); env = `<polyline fill="none" stroke="#45d4ff" stroke-width="1.2" points="${Array.from({ length: n }, (_, i) => `${(i / n) * 300},${32 - e[i] * 26}`).join(' ')}"/>`; }
-  return `<svg class="viz" viewBox="0 0 300 38">${out}${env}</svg>
+  return `<svg class="viz" viewBox="0 0 300 38">${out}${env}<line class="sweep" x1="0" x2="0" y1="0" y2="38" stroke="#fff" stroke-width="2"/></svg>
     <p class="viz-note">Green = vibration pulses for one shot (${total} ms). Blue = this weapon's actual sound envelope it was built from — the first pulse is the recoil kick.</p>`;
 }
 
@@ -812,7 +814,16 @@ function renderTab() {
       <h3>Muzzle flash</h3>
       <p>${{ cage: 'Flash hider: a small, quick "flower" of flame.', brake: 'Muzzle brake: gas and flame blast out sideways — expect a dust cloud.', ball: 'Shotgun: a big orange fireball.', cone: 'Recoil booster: a long forward cone of flame.', comp: 'Compensator: flame jets upward to hold the muzzle down.', pistol: 'Short pistol barrel: a small, warm flash.', star: 'No flash suppression: a full star-shaped flash.' }[fp.shape]} Lasts ~${fp.dur} ms; flashlight pattern ${fp.torch.join('/')} ms.</p>
       <div class="feel-actions"><button class="btn-ghost" id="feel-vibe"><svg><use href="#i-vibe"/></svg>Feel one shot</button><button class="btn-ghost" id="feel-hear"><svg><use href="#i-sound"/></svg>Hear one shot</button></div>`;
-    $('#feel-vibe').onclick = () => { if (!Haptics.supported) toast('Vibration isn\'t available on this device.'); Haptics.shot(w, S.bank); };
+    $('#feel-vibe').onclick = async () => {
+      // works even if the Vibration toggle is off: this is an explicit preview
+      await audio.unlock();
+      const pat = Haptics.fromEnvelope(w, S.bank), total = pat.reduce((a, b) => a + b, 0);
+      const ok = Haptics.supported && navigator.vibrate(pat);
+      audio.shot(w);
+      const sw = $('.viz .sweep');
+      if (sw) sw.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(300px)' }], { duration: total, easing: 'linear' });
+      toast(ok ? `Vibrating ${w.name} pattern · ${total} ms` : Haptics.supported ? 'Your phone blocked vibration — turn off Silent / Do Not Disturb (Bedtime mode) and allow vibration for Chrome.' : 'Vibration isn\'t supported in this browser (iPhone & desktop block it). Sound played instead.', 3200);
+    };
     $('#feel-hear').onclick = async () => { await audio.unlock(); audio.shot(w); };
     if (!S.bank) audio.prepare(w).then((bk) => { S.bank = bk; if (tab === 'feel' && S.w === w) renderTab(); });
   }
@@ -888,7 +899,7 @@ function route() {
     if (settings.torch) { settings.torch = false; Torch.disable(); syncToggles(); }
     audio.stopAmbient(); weather.stop();
     $('#view-sim').hidden = true; $('#view-armory').hidden = false;
-    document.title = 'Calibre — Gun Simulator & Field Manual · Korvex Studios';
+    document.title = 'Calibre — Gun Simulator & Field Manual · ARTIN Studios';
     keepAwake(false);
   }
   checkRotate();
@@ -910,7 +921,7 @@ function gate() {
 }
 
 // ------------------------------------------------------------------ boot
-// Splash: the Korvex mark draws in over ~0.5 s, names rise, then it fades.
+// Splash: the ARTIN mark draws in over ~0.5 s, names rise, then it fades.
 const SPLASH_MS = 1150;
 setTimeout(() => { const sp = $('#splash'); sp.classList.add('done'); setTimeout(() => sp.remove(), 400); }, SPLASH_MS);
 buildFilters(); renderGrid(); renderHero(); syncToggles(); route(); gate();

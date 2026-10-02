@@ -7,8 +7,8 @@
   <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
   <g transform="translate(64 64) scale(6)" fill="none" stroke="#a3f53a">
     <path d="M32 4 L56 12 V31 C56 45 46 54 32 60 C18 54 8 45 8 31 V12 Z" stroke-width="2.6" stroke-linejoin="round"/>
-    <path d="M22 17 V47 M41 17 L27 32 L41 47" stroke-width="4" stroke-linecap="square"/>
-    <path d="M47 22 L37.5 32 L47 42" stroke-width="2.6" stroke-linecap="square" opacity=".75"/>
-    <circle cx="27" cy="32" r="2.6" fill="#fff" stroke="none"/>
+    <path d="M19 47 L32 15 L45 47" stroke-width="4.2" stroke-linecap="square"/>
+    <path d="M24 36 H40" stroke-width="3" stroke-linecap="square"/>
+    <circle cx="32" cy="15" r="2.8" fill="#fff" stroke="none"/>
   </g>
 </svg>

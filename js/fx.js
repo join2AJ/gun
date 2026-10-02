@@ -20,14 +20,14 @@ export const Haptics = {
     const segs = [[true, kick]];
     if (bank) {
       const { envelope: e, frameMs } = bank;
-      const win = 16;
+      const win = 20;
       let quiet = 0;
       for (let t = kick; t < 650; t += win) {
         let lvl = 0;
         for (let i = Math.floor(t / frameMs); i < Math.floor((t + win) / frameMs) && i < e.length; i++) lvl = Math.max(lvl, e[i]);
         if (lvl < 0.025) { quiet += win; if (quiet > 90) break; segs.push([false, win]); continue; }
         quiet = 0;
-        const on = Math.min(win, Math.max(4, Math.round(win * Math.min(1, Math.pow(lvl * 3, 0.7)) * Math.min(1.4, k))));
+        const on = Math.min(win, Math.max(8, Math.round(win * Math.min(1, Math.pow(lvl * 3, 0.7)) * Math.min(1.4, k))));
         segs.push([true, on]); if (on < win) segs.push([false, win - on]);
       }
     } else segs.push([false, 20], [true, Math.round(kick * 0.4)]);

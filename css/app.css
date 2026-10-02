@@ -481,7 +481,7 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 @media (max-height: 520px) { .autold { height: 40px; padding: 0 8px; font-size: 9.5px; } }
 @media (max-width: 720px) { .autold span { display: none; } .autold { padding: 0 12px; } }
 
-/* splash: Korvex mark draws in (~0.5 s), studio + game names rise, then fades */
+/* splash: ARTIN mark draws in (~0.5 s), studio + game names rise, then fades */
 .splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(ellipse at center, #0d1a12, #030506 70%); transition: opacity 0.35s, visibility 0.35s; }
 .splash.done { opacity: 0; visibility: hidden; pointer-events: none; }
 .splash-in { display: grid; justify-items: center; gap: 10px; }
@@ -489,7 +489,7 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 .splash-mark [pathLength] { stroke-dasharray: 1; stroke-dashoffset: 1; animation: vdraw 0.5s cubic-bezier(.6, 0, .3, 1) forwards; }
 .splash-mark .v-bolt [pathLength] { animation-delay: 0.08s; }
 .splash-mark .v-ticks { animation-delay: 0.25s !important; }
-.splash-mark .v-core { transform-origin: 27px 32px; transform: scale(0); animation: vcore 0.35s 0.35s cubic-bezier(.3, 1.6, .5, 1) forwards; }
+.splash-mark .v-core { transform-origin: 32px 15px; transform: scale(0); animation: vcore 0.35s 0.35s cubic-bezier(.3, 1.6, .5, 1) forwards; }
 @keyframes vdraw { to { stroke-dashoffset: 0; } }
 @keyframes vcore { to { transform: scale(1); } }
 .splash-mark { animation: vflash 0.5s 0.45s ease-out; }
@@ -500,3 +500,5 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 .splash-game { font-size: 46px; color: #fff; animation-delay: 0.45s; text-shadow: 0 0 24px rgba(163, 245, 58, 0.25); }
 @keyframes rise { to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .splash * { animation-duration: 0.01s !important; animation-delay: 0s !important; } }
+
+.ammo-meta .inf { color: var(--cyan); font-weight: 400; margin-left: 4px; }
