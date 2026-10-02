@@ -9,7 +9,7 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
-## [1.2.0] — 2026-10-02 · Play build 4
+## [1.2.0] — 2026-10-02 · Play build 4 · `eef7122`
 ### Added
 - Live AdMob IDs for the ARTIN Studios account in `android/gradle.properties` (app, banner `calibre_banner`, rewarded `calibre_rewarded`). Release builds now show real ads; debug builds still use Google's test ads.
 ### Changed
