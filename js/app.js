@@ -874,6 +874,9 @@ function openSettings() {
     `Flashlight: ${NATIVE ? (Torch.possible ? 'ready' : 'not on this phone') : Torch.possible && window.isSecureContext ? 'may be available (Chrome on Android)' : 'unavailable'}`,
     `Audio: ${window.AudioContext || window.webkitAudioContext ? 'ready' : 'missing'}`,
   ].join(' · ');
+  const ads = Store.adStatus();
+  $('#ad-note').hidden = !ads;
+  if (ads) $('#ad-note').textContent = `Ads — SDK: ${ads.sdk} · consent: ${ads.consent} · banner: ${ads.banner} · video: ${ads.rewarded}`;
   fetch('version.json').then((r) => r.json()).then((v) => { $('#app-version').textContent = `Calibre v${v.version} · build ${v.versionCode} · ${v.date}`; }).catch(() => {});
   $('#settings').showModal();
 }

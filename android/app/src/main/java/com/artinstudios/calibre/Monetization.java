@@ -17,6 +17,7 @@ import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryPurchasesParams;
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
@@ -64,6 +65,10 @@ public class Monetization implements PurchasesUpdatedListener {
     private RewardedAd rewarded;
     private boolean rewardedLoading = false;
     private int rewardedFailures = 0;
+    private int bannerFailures = 0;
+    // Last AdMob result per format, shown in Settings so ad problems can be diagnosed on the phone.
+    private volatile String bannerStatus = "waiting", rewardedStatus = "waiting";
+    private final android.os.Handler bannerRetry = new android.os.Handler(android.os.Looper.getMainLooper());
     private final android.os.Handler retry = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean bannerWanted = false;
     private boolean adsReady = false;
@@ -116,7 +121,17 @@ public class Monetization implements PurchasesUpdatedListener {
             DisplayMetrics dm = activity.getResources().getDisplayMetrics();
             int widthDp = (int) (dm.widthPixels / dm.density);
             banner.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, widthDp));
+            banner.setAdListener(new AdListener() {
+                @Override public void onAdLoaded() { bannerFailures = 0; bannerStatus = "showing"; }
+                @Override public void onAdFailedToLoad(LoadAdError e) {
+                    // AdView only refreshes after a successful load, so retry failed ones ourselves.
+                    bannerStatus = "error " + e.getCode() + ": " + e.getMessage();
+                    long delay = Math.min(300_000L, 30_000L << Math.min(bannerFailures++, 4));
+                    bannerRetry.postDelayed(() -> { if (banner != null) banner.loadAd(new AdRequest.Builder().build()); }, delay);
+                }
+            });
             bannerBox.addView(banner);
+            bannerStatus = "loading";
             banner.loadAd(new AdRequest.Builder().build());
         }
         bannerBox.setVisibility(View.VISIBLE);
@@ -129,11 +144,12 @@ public class Monetization implements PurchasesUpdatedListener {
         retry.removeCallbacksAndMessages(null);
         RewardedAd.load(activity, BuildConfig.AD_REWARDED, new AdRequest.Builder().build(), new RewardedAdLoadCallback() {
             @Override public void onAdLoaded(RewardedAd ad) {
-                rewarded = ad; rewardedLoading = false; rewardedFailures = 0;
+                rewarded = ad; rewardedLoading = false; rewardedFailures = 0; rewardedStatus = "ready";
                 emit("{\"type\":\"rewardedReady\",\"ready\":true}");
             }
             @Override public void onAdFailedToLoad(LoadAdError e) {
                 rewarded = null; rewardedLoading = false;
+                rewardedStatus = "error " + e.getCode() + ": " + e.getMessage();
                 long delay = Math.min(300_000L, 30_000L << Math.min(rewardedFailures++, 4));
                 retry.postDelayed(Monetization.this::loadRewarded, delay);
                 emit("{\"type\":\"rewardedReady\",\"ready\":false,\"code\":" + e.getCode() + "}");
@@ -197,6 +213,12 @@ public class Monetization implements PurchasesUpdatedListener {
     // ------------------------------------------------------------------ JavaScript API (window.CalibreStore)
     @JavascriptInterface public void setBanner(boolean show) { activity.runOnUiThread(() -> { bannerWanted = show; applyBanner(); }); }
     @JavascriptInterface public boolean rewardedReady() { return rewarded != null; }
+    @JavascriptInterface public String adStatus() {
+        try {
+            return new JSONObject().put("sdk", adsReady ? "ready" : "starting").put("consent", consent != null && consent.canRequestAds() ? "ok" : "pending")
+                    .put("banner", bannerStatus).put("rewarded", rewardedStatus).toString();
+        } catch (JSONException e) { return "{}"; }
+    }
     /** Asks for a rewarded ad now (e.g. when the unlock dialog opens) instead of waiting for the next retry. */
     @JavascriptInterface public void loadRewardedNow() { activity.runOnUiThread(() -> { rewardedFailures = 0; loadRewarded(); }); }
     @JavascriptInterface public String products() { return productsJson(); }

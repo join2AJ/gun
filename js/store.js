@@ -30,6 +30,7 @@ function mockBackend() {
     setBanner(v) { document.documentElement.dataset.mockBanner = v ? '1' : '0'; },
     rewardedReady: () => true,
     loadRewardedNow() {},
+    adStatus: () => JSON.stringify({ sdk: 'mock', consent: 'ok', banner: 'showing', rewarded: 'ready' }),
     products: () => JSON.stringify({ type: 'products', products: Object.keys(PRODUCTS).map((id) => ({ id, title: PRODUCTS[id].name, price: PRODUCTS[id].fallback })) }),
     owned: () => JSON.stringify({ type: 'owned', owned: [...owned] }),
     restore() { fire({ type: 'owned', owned: [...owned] }); },
@@ -64,6 +65,7 @@ export const Store = {
   setBanner(show) { if (BACKEND) BACKEND.setBanner(!!show && !this.adsRemoved); },
   rewardedReady() { return !!BACKEND && BACKEND.rewardedReady(); },
   adError: null, // AdMob error code of the last failed rewarded load (3 = no ad to show yet)
+  adStatus() { try { return JSON.parse(BACKEND?.adStatus?.() || 'null'); } catch { return null; } },
   loadRewarded() { try { BACKEND?.loadRewardedNow?.(); } catch { /* older app build */ } },
 
   /** Watch a rewarded ad to unlock `key` ('g:<gun>' or 's:<scene>') for 24 h. */
