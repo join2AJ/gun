@@ -141,6 +141,6 @@ Texts, Play Console answers (data safety, content rating, target audience) and g
 - **Rewarded video:** unlocks one premium weapon or environment for 24 hours. Field manuals are always free.
 - **One-time purchases** (Google Play Billing): `remove_ads`, `full_arsenal`, `pro_bundle`. Create these exact IDs in Play Console. Owned items are restored automatically.
 - **Banner ad** only on the weapon list, never on the range. Google UMP consent runs first where required, and *Store → Ad privacy choices* appears when needed.
-- **Ad IDs:** set `admobAppId`, `admobBanner` and `admobRewarded` in `android/gradle.properties`. Until then, and always for debug builds, **Google's test ads** are used.
+- **Ad IDs:** the live `admobAppId`, `admobBanner` and `admobRewarded` are set in `android/gradle.properties` and used by release builds. Debug builds always use **Google's test ads**.
 - Test the store in a browser with `index.html?storetest` (simulated purchases and ads).
-- Put your publisher ID in `app-ads.txt` and serve it from your developer website.
+- `app-ads.txt` holds the publisher ID. Serve it from the root of the developer website listed on Google Play.

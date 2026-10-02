@@ -8,13 +8,18 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 `Play build` is the Android `versionCode`. It must increase with every Google Play upload.
 
 ## [Unreleased]
-### Fixed
-- GitHub "Android build" workflow: it had failed on every run because the `android-actions/setup-android` step crashes on current runners. It now uses the runner's preinstalled Android SDK.
-- The "Tag releases" workflow pushes tags one at a time and warns instead of failing. GitHub won't let its bot create tags on commits with older workflow files (`v1.0.0` and `v1.1.0`), but those versions remain restorable through their CHANGELOG commit hashes.
+
+## [1.2.0] — 2026-10-02 · Play build 4
+### Added
+- Live AdMob IDs for the ARTIN Studios account in `android/gradle.properties` (app, banner `calibre_banner`, rewarded `calibre_rewarded`). Release builds now show real ads; debug builds still use Google's test ads.
 ### Changed
+- `app-ads.txt` now lists the real publisher ID `pub-5481819768860977`.
 - Privacy policy and store listing now use the studio contact email artinstudios.official@gmail.com instead of a placeholder.
 - Service-worker cache bumped to `calibre-v9`.
 - GitHub workflows updated to `actions/checkout@v5`, `setup-java@v5` and `upload-artifact@v5`, replacing the deprecated Node 20 versions.
+### Fixed
+- GitHub "Android build" workflow: it had failed on every run because the `android-actions/setup-android` step crashes on current runners. It now uses the runner's preinstalled Android SDK.
+- The "Tag releases" workflow pushes tags one at a time and warns instead of failing. GitHub won't let its bot create tags on commits with older workflow files (`v1.0.0` and `v1.1.0`), but those versions remain restorable through their CHANGELOG commit hashes.
 
 ## [1.1.1] — 2026-10-02 · Play build 3
 ### Added
