@@ -705,7 +705,10 @@ document.addEventListener('click', (e) => {
       $('#unlock').close();
       if (key.startsWith('s:')) { applyScene(key.slice(2), true); if ($('#scenes').open) $('#scenes').close(); }
       toast(`Unlocked for ${UNLOCK_HOURS} hours`, 2200);
-    })) toast('No video available right now — try again in a moment.', 2500);
+    })) {
+      Store.loadRewarded();
+      toast(`No video available right now — trying again${Store.adError != null ? ` (code ${Store.adError})` : ''}.`, 2800);
+    }
   }
   else if (a === 'fav') {
     const id = S.w.id;
@@ -892,21 +895,25 @@ function offerHtml(id, owned) {
   const p = PRODUCTS[id];
   return `<div class="offer ${p.best ? 'best' : ''} ${owned ? 'owned' : ''}">
     <div><b>${p.name}${p.best ? ' <i>Best value</i>' : ''}</b><small>${p.blurb}</small></div>
-    ${owned ? '<span class="have">✓ Owned</span>' : `<button class="btn-primary" type="button" data-action="buy" data-id="${id}" ${Store.available(id) ? '' : 'disabled'}>${Store.available(id) ? esc(Store.price(id)) : 'Unavailable'}</button>`}
+    ${owned ? '<span class="have">✓ Owned</span>' : `<button class="btn-primary" type="button" data-action="buy" data-id="${id}" ${Store.available(id) ? '' : 'disabled'}>${Store.available(id) ? esc(Store.price(id)) : 'Soon'}</button>`}
   </div>`;
 }
+const adLabel = () => (Store.rewardedReady() ? 'Watch' : Store.adError != null ? 'Retry' : 'Loading…');
+// Shown until Google Play returns the products, e.g. on a sideloaded build before launch.
+const shopNote = () => (Object.keys(Store.products).length ? '' : '<p class="shop-note">Purchases open once Calibre is live on Google Play.</p>');
 function openUnlock(key) {
   const isGun = key.startsWith('g:'), id = key.slice(2);
   const name = isGun ? byId[id].name : SCENES[id].label;
   $('#unlock-title').textContent = `Unlock ${name}`;
   $('#unlock-note').textContent = isGun ? 'Premium weapon. Its field manual is always free — unlock it to fire.' : 'Premium environment.';
   $('#unlock-offers').innerHTML = `<div class="offer ad"><div><b><svg><use href="#i-ad"/></svg>Watch a short video</b><small>Free · unlocks ${isGun ? 'this weapon' : 'this environment'} for ${UNLOCK_HOURS} hours</small></div>
-      <button class="btn-primary" type="button" data-action="watch-ad" data-key="${key}">${Store.rewardedReady() ? 'Watch' : 'Loading…'}</button></div>
-    ${offerHtml('full_arsenal', false)}${offerHtml('pro_bundle', false)}`;
+      <button class="btn-primary" type="button" data-action="watch-ad" data-key="${key}">${adLabel()}</button></div>
+    ${offerHtml('full_arsenal', false)}${offerHtml('pro_bundle', false)}${shopNote()}`;
+  if (!Store.rewardedReady()) Store.loadRewarded();
   if (!$('#unlock').open) $('#unlock').showModal();
 }
 function openStore() {
-  $('#store-offers').innerHTML = Object.keys(PRODUCTS).map((id) => offerHtml(id, Store.owned.has(id) || Store.owned.has('pro_bundle'))).join('');
+  $('#store-offers').innerHTML = Object.keys(PRODUCTS).map((id) => offerHtml(id, Store.owned.has(id) || Store.owned.has('pro_bundle'))).join('') + shopNote();
   $('#privacy-options').hidden = !Store.privacyOptionsRequired();
   if (!$('#store').open) $('#store').showModal();
 }
@@ -916,7 +923,7 @@ Store.on(() => {
   if (ev?.type === 'purchaseError') toast('Purchase didn\'t complete — please try again.', 2500);
   if (ev?.type === 'owned' && Store.premium && $('#unlock').open) { $('#unlock').close(); toast('Thank you! Everything is unlocked.', 2600); }
   if ($('#store').open) openStore();
-  if ($('#unlock').open && ev?.type === 'rewardedReady') { const b = $('#unlock [data-action="watch-ad"]'); if (b) b.textContent = Store.rewardedReady() ? 'Watch' : 'Loading…'; }
+  if ($('#unlock').open && ev?.type === 'rewardedReady') { const b = $('#unlock [data-action="watch-ad"]'); if (b) b.textContent = adLabel(); }
   if (!$('#view-armory').hidden) renderGrid();
   renderLock();
   Store.setBanner(!$('#view-armory').hidden);

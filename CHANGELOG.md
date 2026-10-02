@@ -9,6 +9,13 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-10-02 · Play build 5
+### Fixed
+- The "Watch a short video" button could stay on "Loading…" forever: when AdMob had no rewarded ad (common for new ad units), the app never asked again. Failed loads now retry by themselves (30 s, 60 s, 2 min … up to 5 min), opening the unlock dialog asks straight away, and the button shows **Retry** with the AdMob error code.
+### Changed
+- Store buttons read **Soon** instead of "Unavailable" until Google Play returns the products, with the note "Purchases open once Calibre is live on Google Play."
+- Service-worker cache bumped to `calibre-v10`.
+
 ## [1.2.0] — 2026-10-02 · Play build 4 · `eef7122`
 ### Added
 - Live AdMob IDs for the ARTIN Studios account in `android/gradle.properties` (app, banner `calibre_banner`, rewarded `calibre_rewarded`). Release builds now show real ads; debug builds still use Google's test ads.

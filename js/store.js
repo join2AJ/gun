@@ -29,6 +29,7 @@ function mockBackend() {
   return {
     setBanner(v) { document.documentElement.dataset.mockBanner = v ? '1' : '0'; },
     rewardedReady: () => true,
+    loadRewardedNow() {},
     products: () => JSON.stringify({ type: 'products', products: Object.keys(PRODUCTS).map((id) => ({ id, title: PRODUCTS[id].name, price: PRODUCTS[id].fallback })) }),
     owned: () => JSON.stringify({ type: 'owned', owned: [...owned] }),
     restore() { fire({ type: 'owned', owned: [...owned] }); },
@@ -62,6 +63,8 @@ export const Store = {
 
   setBanner(show) { if (BACKEND) BACKEND.setBanner(!!show && !this.adsRemoved); },
   rewardedReady() { return !!BACKEND && BACKEND.rewardedReady(); },
+  adError: null, // AdMob error code of the last failed rewarded load (3 = no ad to show yet)
+  loadRewarded() { try { BACKEND?.loadRewardedNow?.(); } catch { /* older app build */ } },
 
   /** Watch a rewarded ad to unlock `key` ('g:<gun>' or 's:<scene>') for 24 h. */
   unlockWithAd(key, done) {
@@ -78,6 +81,7 @@ export const Store = {
 
   _handle(msg) {
     if (msg.type === 'products') { this.products = Object.fromEntries(msg.products.map((p) => [p.id, p])); }
+    else if (msg.type === 'rewardedReady') { this.adError = msg.ready ? null : (msg.code ?? -1); }
     else if (msg.type === 'owned') { this.owned = new Set(msg.owned); ls.set('owned', msg.owned); }
     else if (msg.type === 'reward') {
       const cb = this.pending.get(msg.token); this.pending.delete(msg.token);

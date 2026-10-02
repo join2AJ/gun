@@ -62,6 +62,9 @@ public class Monetization implements PurchasesUpdatedListener {
     private ConsentInformation consent;
     private AdView banner;
     private RewardedAd rewarded;
+    private boolean rewardedLoading = false;
+    private int rewardedFailures = 0;
+    private final android.os.Handler retry = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean bannerWanted = false;
     private boolean adsReady = false;
     private BillingClient billing;
@@ -119,10 +122,22 @@ public class Monetization implements PurchasesUpdatedListener {
         bannerBox.setVisibility(View.VISIBLE);
     }
 
+    /** Loads the next rewarded ad. Failed loads retry by themselves after 30 s, 60 s, 120 s … up to 5 min. */
     private void loadRewarded() {
+        if (!adsReady || rewarded != null || rewardedLoading) return;
+        rewardedLoading = true;
+        retry.removeCallbacksAndMessages(null);
         RewardedAd.load(activity, BuildConfig.AD_REWARDED, new AdRequest.Builder().build(), new RewardedAdLoadCallback() {
-            @Override public void onAdLoaded(RewardedAd ad) { rewarded = ad; emit("{\"type\":\"rewardedReady\",\"ready\":true}"); }
-            @Override public void onAdFailedToLoad(LoadAdError e) { rewarded = null; emit("{\"type\":\"rewardedReady\",\"ready\":false}"); }
+            @Override public void onAdLoaded(RewardedAd ad) {
+                rewarded = ad; rewardedLoading = false; rewardedFailures = 0;
+                emit("{\"type\":\"rewardedReady\",\"ready\":true}");
+            }
+            @Override public void onAdFailedToLoad(LoadAdError e) {
+                rewarded = null; rewardedLoading = false;
+                long delay = Math.min(300_000L, 30_000L << Math.min(rewardedFailures++, 4));
+                retry.postDelayed(Monetization.this::loadRewarded, delay);
+                emit("{\"type\":\"rewardedReady\",\"ready\":false,\"code\":" + e.getCode() + "}");
+            }
         });
     }
 
@@ -182,6 +197,8 @@ public class Monetization implements PurchasesUpdatedListener {
     // ------------------------------------------------------------------ JavaScript API (window.CalibreStore)
     @JavascriptInterface public void setBanner(boolean show) { activity.runOnUiThread(() -> { bannerWanted = show; applyBanner(); }); }
     @JavascriptInterface public boolean rewardedReady() { return rewarded != null; }
+    /** Asks for a rewarded ad now (e.g. when the unlock dialog opens) instead of waiting for the next retry. */
+    @JavascriptInterface public void loadRewardedNow() { activity.runOnUiThread(() -> { rewardedFailures = 0; loadRewarded(); }); }
     @JavascriptInterface public String products() { return productsJson(); }
     @JavascriptInterface public String owned() { return ownedJson(); }
     @JavascriptInterface public void restore() { if (billing != null && billing.isReady()) queryOwned(); }
