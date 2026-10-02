@@ -51,7 +51,8 @@ For entertainment and education only. Sounds are synthesised simulations; specif
 
 ## Play Console answers
 - **App-ads.txt:** host `app-ads.txt` (template in repo root) on the developer website you enter in Play Console.
-- **Privacy policy URL:** https://gunga.netlify.app/privacy.html (fill in your support email in `privacy.html` first)
+- **Privacy policy URL:** https://gunga.netlify.app/privacy.html 
+- **Developer / support email:** artinstudios.official@gmail.com (switch to a domain address later)
 - **App access:** All functionality available without special access
 - **Ads:** **Yes, contains ads** (AdMob banner on the weapon list + optional rewarded videos)
 - **In-app products** (Monetize → Products → In-app products, all *one-time / non-consumable*):
