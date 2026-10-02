@@ -1,6 +1,6 @@
 {
-  "name": "Arsenal — Gun Simulator & Field Guide",
-  "short_name": "Arsenal",
+  "name": "Calibre — Gun Simulator & Field Manual",
+  "short_name": "Calibre",
   "description": "Realistic gun sound simulator with vibration and flashlight effects, plus a field guide to famous firearms.",
   "start_url": "./",
   "scope": "./",

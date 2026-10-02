@@ -1,3 +1,5 @@
+import { WORLD } from './data-world.js';
+
 // Weapon database.
 // sound: power 0-1 (energy), crack 0-1 (supersonic snap), decay s, thump Hz (body),
 //        bright Hz (blast brightness), tail 0-1 (echo), mech: cycle sound type.
@@ -53,6 +55,14 @@ export const CARTS = {
   '12ga':    { name: '12 gauge (2¾")', d: 18.5, cl: 70, oal: 70, base: 20.2, shell: true },
   '50bmg':   { name: '.50 BMG (12.7×99mm)', d: 12.98, cl: 99.3, oal: 138, base: 20.4 },
   '145x114': { name: '14.5×114mm', d: 14.88, cl: 114, oal: 155.8, base: 26.95 },
+  '58x42':   { name: '5.8×42mm', d: 6.0, cl: 42, oal: 58, base: 10.4 },
+  '545x39':  { name: '5.45×39mm', d: 5.6, cl: 39.5, oal: 57, base: 10.0 },
+  '9x18':    { name: '9×18mm Makarov', d: 9.27, cl: 18, oal: 25, base: 9.95, pistol: true },
+  '9x39':    { name: '9×39mm', d: 9.25, cl: 38.7, oal: 56, base: 11.3 },
+  '338lm':   { name: '.338 Lapua Magnum', d: 8.6, cl: 69.2, oal: 93.5, base: 14.9 },
+  '30carb':  { name: '.30 Carbine', d: 7.62, cl: 32.8, oal: 42, base: 9.2, pistol: true },
+  '77x58':   { name: '7.7×58mm Arisaka', d: 7.9, cl: 58, oal: 80, base: 12.0 },
+  '50ae':    { name: '.50 Action Express', d: 12.7, cl: 32.6, oal: 40.9, base: 13.9, pistol: true },
 };
 
 export const ENV_LABELS = { desert: 'Desert / sand', snow: 'Snow / arctic', jungle: 'Jungle / rain', mud: 'Mud / water', altitude: 'High altitude' };
@@ -1264,6 +1274,8 @@ WEAPONS.push(
       extras: [['rect', 600, -40, 56, 10, 'poly', 4], ['rect', 620, -32, 8, 14, 'poly', 1]] },
   },
 );
+
+WEAPONS.push(...WORLD);
 
 WEAPONS.forEach((w) => {
   Object.assign(w, KEY[w.id] || {});

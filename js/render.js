@@ -432,7 +432,8 @@ function drawBipod(b, bp) {
 function drawLong(b, a) {
   const rec = a.rec;
   drawBipod(b, a.bipod && a.bipod.behind !== false ? a.bipod : null);
-  if (a.mag && a.mag.behind) drawMag(b, a.mag, rec);
+  const magG = (fn) => { b.raw('<g class="mag-g">'); fn(); b.raw('</g>'); };
+  if (a.mag && a.mag.behind) magG(() => drawMag(b, a.mag, rec));
   if (a.stock) drawStock(b, a.stock, rec);
   if (a.tube) drawMag(b, { style: 'tube', ...a.tube }, rec);
   // barrel
@@ -440,7 +441,7 @@ function drawLong(b, a) {
   b.rect(br.x0, -br.r, br.x1 - br.x0, br.r * 2, br.mat ?? 'blued', 1);
   if (a.gasTube) b.rect(a.gasTube.x0, -br.r - (a.gasTube.h ?? 8) - 2, a.gasTube.x1 - a.gasTube.x0, a.gasTube.h ?? 8, 'blued', 3);
   if (a.fore && !a.fore.over) drawFore(b, a.fore, rec);
-  if (a.mag && !a.mag.behind && a.mag.style !== 'belt') drawMag(b, a.mag, rec);
+  if (a.mag && !a.mag.behind && a.mag.style !== 'belt') magG(() => drawMag(b, a.mag, rec));
   drawGrip(b, a.grip, rec);
   drawGuard(b, a.guard, rec);
   // receiver
@@ -451,8 +452,9 @@ function drawLong(b, a) {
   if (rec.port) b.rect(rec.port[0], rec.port[1], rec.port[2], rec.port[3], 'dark', 2);
   (rec.lines || []).forEach((l) => b.line(l[0], l[1], l[2], l[3], 'rgba(0,0,0,.5)', 1.4));
   if (a.fore && a.fore.over) drawFore(b, a.fore, rec);
-  if (a.mag && a.mag.style === 'belt') drawMag(b, a.mag, rec);
+  if (a.mag && a.mag.style === 'belt') magG(() => drawMag(b, a.mag, rec));
   // bolt handles / charging handles
+  b.raw('<g class="bolt-g">');
   if (a.bolt) {
     const { x, style } = a.bolt;
     if (style === 'knob') {
@@ -465,6 +467,7 @@ function drawLong(b, a) {
       b.rect(x, a.bolt.y ?? -6, a.bolt.w ?? 18, a.bolt.h ?? 8, 'blued', 2);
     }
   }
+  b.raw('</g>');
   // sights
   if (a.fsight) {
     const { x, h } = a.fsight;
@@ -496,7 +499,7 @@ function drawPistol(b, a) {
     const o = (dx * (y - g.y)) / g.len;
     b.line(g.x0 - o + 6, y, g.x1 - o - 8, y, 'rgba(0,0,0,.25)', 1);
   }
-  b.rect(g.x0 - dx - 3, g.y + g.len - 3, g.x1 - g.x0 + 6, 9, a.magBase ?? 'blued', 3);
+  b.raw('<g class="mag-g">'); b.rect(g.x0 - dx - 3, g.y + g.len - 3, g.x1 - g.x0 + 6, 9, a.magBase ?? 'blued', 3); b.raw('</g>');
   // frame & trigger guard
   b.path(`M${f.x0} ${f.top} L${f.x1} ${f.top} L${f.x1} ${f.bot - 6} Q${f.x1} ${f.bot} ${f.x1 - 8} ${f.bot} L${f.x0} ${f.bot} Z`, f.mat);
   const gx = f.guardX, gy = f.bot;
@@ -507,12 +510,14 @@ function drawPistol(b, a) {
   // barrel bit beyond slide (if any)
   const mx = s.x1 + (a.barrelOut ?? 0);
   if (a.barrelOut) b.rect(s.x1 - 4, -6, a.barrelOut + 4, 12, 'blued', 2);
+  b.raw('<g class="slide-g">');
   // slide
   b.path(`M${s.x0} ${s.top + 4} Q${s.x0} ${s.top} ${s.x0 + 6} ${s.top} L${s.x1 - 6} ${s.top} Q${s.x1} ${s.top} ${s.x1} ${s.top + 6} L${s.x1} ${s.bot} L${s.x0} ${s.bot} Z`, s.mat);
   for (let i = 0; i < (s.serr ?? 8); i++) b.line(s.x0 + 10 + i * 5, s.top + 4, s.x0 + 10 + i * 5, s.bot - 4, 'rgba(0,0,0,.45)', 1.6);
   if (s.port) b.rect(s.port[0], s.top + 3, s.port[1], (s.bot - s.top) * 0.5, 'dark', 2);
   b.rect(s.x1 - 14, s.top - 5, 8, 6, 'blued', 1); // front sight
   b.rect(s.x0 + 6, s.top - 6, 14, 7, 'blued', 1); // rear sight
+  b.raw('</g>');
   if (a.lines) a.lines.forEach((l) => b.line(...l, 'rgba(0,0,0,.45)', 1.2));
   return mx;
 }
@@ -573,6 +578,7 @@ export function flashProfile(w) {
   if (shape === 'ball') dur = 115;
   if (shape === 'brake') dur = 150;
   if (shape === 'pistol') dur = 38 + Math.round(p.power * 30);
+  if (p.suppressed) return { shape: 'none', color, size: 0.25, dur: 18, torch: [], screen: 0.03 };
   const torch = shape === 'brake' ? [dur, 45, 55] : shape === 'ball' ? [dur + 30] : shape === 'cone' ? [dur, 30, 30] : [Math.max(40, dur)];
   return { shape, color, size, dur, torch, screen: Math.min(0.85, 0.2 + p.power * 0.55 + (shape === 'ball' ? 0.15 : 0) - (shape === 'cage' ? 0.12 : 0)) };
 }
@@ -593,6 +599,7 @@ function flashShape(uid, fp) {
     case 'comp': return `<ellipse cx="50" cy="0" rx="70" ry="28" fill="${g}"/>
       <path d="M-4 -4 L20 -60 L22 -6 Z M10 -4 L40 -52 L36 -4 Z" fill="${c1}" opacity=".9"/>
       <path d="M0 -6 L80 -18 L60 0 L90 4 L0 6 Z" fill="${c1}" opacity=".9"/><circle cx="8" cy="0" r="13" fill="${c0}"/>`;
+    case 'none': return `<circle cx="4" cy="0" r="8" fill="${g}" opacity=".5"/>`;
     case 'pistol': return `<ellipse cx="40" cy="0" rx="56" ry="22" fill="${g}"/><path d="M0 -5 L56 -16 L40 -2 L74 0 L40 2 L56 16 L0 5 Z" fill="${c1}" opacity=".9"/><circle cx="6" cy="0" r="10" fill="${c0}"/>`;
     default: return `<ellipse cx="60" cy="0" rx="85" ry="34" fill="${g}"/>
       <path d="M0 -6 L70 -26 L46 -4 L120 0 L46 4 L70 26 L0 6 Z" fill="${c0}" opacity=".95"/>
@@ -622,7 +629,7 @@ export function renderWeapon(w, opts = {}) {
     fx = `<g class="flash" transform="translate(${mx} 0)" opacity="0"><g class="flash-inner" data-s="${s.toFixed(2)}" transform="scale(${s.toFixed(2)})">${flashShape(uid, fp)}</g></g>`;
   }
   const ej = a.eject ?? { x: (a.rec?.x0 ?? 0) + 40, y: -10 };
-  const meta = { flash: fp, ejectDir: a.ejectDir ?? -1, ejectDown: !!a.ejectDown, muzzle: { x: mx, y: 0 }, eject: { x: ej.x, y: ej.y * b.k }, grip: a.grip?.x ?? a.rec?.x0 ?? 0, box: [vx, vy, vw, vh] };
+  const meta = { kind: a.kind, slideTravel: a.kind === 'pistol' ? (a.slide.x1 - a.slide.x0) * 0.22 : 0, flash: fp, ejectDir: a.ejectDir ?? -1, ejectDown: !!a.ejectDown, muzzle: { x: mx, y: 0 }, eject: { x: ej.x, y: ej.y * b.k }, grip: a.grip?.x ?? a.rec?.x0 ?? 0, box: [vx, vy, vw, vh] };
   const svg = `<svg class="weapon-svg" viewBox="${vx} ${vy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${w.name}" overflow="visible">
     ${b.defs(fp.color)}<g class="gun-body">${b.out.join('')}</g>${fx}</svg>`;
   return { svg, meta };

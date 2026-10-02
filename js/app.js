@@ -3,6 +3,7 @@ import { renderWeapon } from './render.js';
 import { GunAudio } from './audio.js';
 import { Haptics, Torch, Particles, Weather } from './fx.js';
 import { SCENES, SCENE_ORDER, SCENE_ENV_KEY, sceneSvg } from './scenes.js';
+import { REGIONS, regionsOf, flags, flag } from './flags.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -38,7 +39,18 @@ const ERA_NAME = Object.fromEntries(ERAS.map((e) => [e.id, e.label]));
 const USER_NAME = Object.fromEntries(USERS.map((u) => [u.id, u.label]));
 const INDIAN_UNITS = new Set(['spg', 'nsg', 'parasf', 'marcos', 'garud']);
 const TYPE_NAME = { pistol: 'Pistol', smg: 'SMG', rifle: 'Rifle', sniper: 'Sniper / AMR', lmg: 'LMG', mg: 'MG / GPMG', shotgun: 'Shotgun' };
-const MODE_SHORT = { semi: 'SEMI', burst: 'BURST', auto: 'AUTO', bolt: 'BOLT', pump: 'PUMP' };
+const MODE_SHORT = { semi: 'SEMI', burst: 'BURST', auto: 'AUTO', bolt: 'BOLT', pump: 'PUMP', rapid: 'RAPID' };
+const MODE_NAME = { ...MODE_LABELS, rapid: 'Rapid (hold)' };
+const isManual = (w) => w.modes.includes('bolt') || w.modes.includes('pump');
+/** Modes offered in the simulator: the real ones, plus a trigger-controlled burst on automatics and a hold-to-repeat "rapid" mode on everything else. */
+function simModes(w) {
+  const m = [...w.modes];
+  if (m.includes('auto') && !m.includes('burst')) m.splice(m.indexOf('auto'), 0, 'burst');
+  if (!m.includes('auto')) m.push('rapid');
+  return m;
+}
+const realBurst = (w) => w.modes.includes('burst');
+const rapidGap = (w) => (w.ammo === 'bmg' ? 0.85 : w.type === 'pistol' ? 0.2 : w.type === 'sniper' ? 0.45 : w.ammo === 'shell' ? 0.3 : 0.26);
 const FEED = (w) => (w.ammo === 'belt' ? (w.rotary ? 'linked belt' : 'belt / box') : w.ammo === 'shell' ? 'tube magazine' : w.ping ? 'en-bloc clip' : w.art.mag?.style === 'internal' ? 'internal mag' : w.art.mag?.style === 'drum' ? 'drum' : 'box magazine');
 const isIndian = (w) => w.origin === 'India' || w.users.some((u) => INDIAN_UNITS.has(u)) || /India|Kargil|Indo-Pak/.test(w.wars.join(' ') + w.overview);
 const rateLabel = (w) => (w.rpm ? `${fmt(w.rpm)} rpm` : w.modes.includes('bolt') ? '~15 aimed rpm' : w.modes.includes('pump') ? '~30 rpm' : 'Semi-auto');
@@ -47,11 +59,12 @@ const thumb = (w) => { if (!svgCache.has(w.id)) svgCache.set(w.id, renderWeapon(
 const stars = (n) => '■'.repeat(n) + `<s>${'■'.repeat(5 - n)}</s>`;
 
 // ================================================================== ARMORY
-const F = { era: 'all', type: 'all', user: 'all', q: '', sort: 'year', fav: false, india: false };
+const F = { era: 'all', type: 'all', user: 'all', region: 'all', q: '', sort: 'year', fav: false, india: false };
 
 function buildFilters() {
   $('#era-tabs').innerHTML = ERAS.map((e) => `<button role="tab" data-era="${e.id}" aria-selected="${e.id === F.era}">${e.label}<small>${e.years ?? 'every era'}</small></button>`).join('');
   $('#type-chips').innerHTML = TYPES.map((t) => `<button class="chip" data-type="${t.id}" aria-pressed="${t.id === F.type}">${t.label}</button>`).join('');
+  $('#region-chips').innerHTML = REGIONS.map((r) => `<button class="chip" data-region="${r.id}" aria-pressed="${r.id === F.region}">${r.flag ? flag(r.flag, r.label) : ''}${r.label}</button>`).join('');
   $('#user-chips').innerHTML = USERS.map((u) => `<button class="chip" data-user="${u.id}" aria-pressed="${u.id === F.user}" ${u.hint ? `title="${u.hint}"` : ''}>${u.label}</button>`).join('');
   $('#stat-count').textContent = WEAPONS.length;
   $('#stat-countries').textContent = new Set(WEAPONS.flatMap((w) => w.country.split(' / '))).size;
@@ -61,11 +74,11 @@ function buildFilters() {
     $$(`${sel} [data-${attr}]`).forEach((x) => x.setAttribute(attr === 'era' ? 'aria-selected' : 'aria-pressed', x === b));
     renderGrid();
   });
-  group('#era-tabs', 'era', 'era'); group('#type-chips', 'type', 'type'); group('#user-chips', 'user', 'user');
+  group('#era-tabs', 'era', 'era'); group('#type-chips', 'type', 'type'); group('#user-chips', 'user', 'user'); group('#region-chips', 'region', 'region');
   $('#q').addEventListener('input', (e) => { F.q = e.target.value.trim().toLowerCase(); renderGrid(); });
   $('#sort').addEventListener('change', (e) => { F.sort = e.target.value; renderGrid(); });
-  const flag = (id, key) => $(id).addEventListener('click', (e) => { F[key] = !F[key]; e.currentTarget.setAttribute('aria-pressed', F[key]); renderGrid(); });
-  flag('#fav-only', 'fav'); flag('#india-only', 'india');
+  const toggleFlag = (id, key) => $(id).addEventListener('click', (e) => { F[key] = !F[key]; e.currentTarget.setAttribute('aria-pressed', F[key]); renderGrid(); });
+  toggleFlag('#fav-only', 'fav'); toggleFlag('#india-only', 'india');
 }
 
 function filtered() {
@@ -73,6 +86,7 @@ function filtered() {
     (F.era === 'all' || w.eras.includes(F.era)) &&
     (F.type === 'all' || w.type === F.type) &&
     (F.user === 'all' || w.users.includes(F.user)) &&
+    (F.region === 'all' || regionsOf(w.country).includes(F.region)) &&
     (!F.fav || favs.has(w.id)) && (!F.india || isIndian(w)) &&
     (!F.q || [w.name, w.nickname, w.country, w.caliber, w.designer, TYPE_NAME[w.type], ...w.wars, ...w.users.map((u) => USER_NAME[u]), String(w.year), w.origin ?? ''].join(' ').toLowerCase().includes(F.q)));
   const by = {
@@ -91,7 +105,7 @@ function card(w) {
     <div class="card-art">${thumb(w)}</div>
     <div class="card-body">
       <div class="card-title"><h4>${esc(w.name)}</h4><span class="yr">${w.yearLabel ?? w.year}</span></div>
-      <div class="sub">${esc(w.country)} · ${esc(CARTS[w.cart].name)}</div>
+      <div class="sub"><span class="flags">${flags(w.country)}</span>${esc(w.country)} · ${esc(CARTS[w.cart].name)}</div>
       <div class="kstats"><div><span>Eff. range</span><b>${km(w.eff)}</b></div><div><span>Per load</span><b>${w.capacity}</b></div><div><span>Energy</span><b>${fmt(w.energy)} J</b></div></div>
       <div class="tags"><span class="tag t-type">${TYPE_NAME[w.type]}</span>${units.map((u) => `<span class="tag t-unit">${USER_NAME[u]}</span>`).join('')}${w.wars.slice(0, 1).map((x) => `<span class="tag">${esc(x.replace(/ \(.*\)/, ''))}</span>`).join('')}</div>
     </div></button>`;
@@ -117,7 +131,7 @@ function renderHero() {
   const sc = ['desert', 'mountain', 'range', 'urban'][Math.floor(Math.random() * 4)];
   $('#hero-scene').innerHTML = sceneSvg(sc);
   $('#hero-feat').innerHTML = `<div class="art">${renderWeapon(w).svg}</div>
-    <div class="fstats"><span>RANGE <b>${km(w.eff)}</b></span><span>LOAD <b>${w.capacity}</b></span><span>${esc(CARTS[w.cart].name.split(' (')[0])}</span></div>
+    <div class="fstats"><span>RANGE <b>${km(w.eff)}</b></span><span>LOAD <b>${w.capacity}</b></span><span class="flags">${flags(w.country)}</span><span>${esc(CARTS[w.cart].name.split(' (')[0])}</span></div>
     <span class="cta"><svg><use href="#i-play"/></svg>Fire the ${esc(w.name)}</span>`;
   $('#hero-feat').onclick = () => go(w.id);
 }
@@ -145,8 +159,10 @@ function openWeapon(id) {
   S.token++;
   const w = byId[id];
   S.w = w; S.heat = 0; S.bank = null;
+  S.modes = simModes(w);
   S.mode = store.get('mode:' + id, w.modes[0]);
-  if (!w.modes.includes(S.mode)) S.mode = w.modes[0];
+  if (!S.modes.includes(S.mode)) S.mode = w.modes[0];
+  S.slideLocked = false;
   S.ammo = w.capacity; S.reloading = false; S.cycling = false;
   const { svg, meta } = renderWeapon(w, { fx: true });
   gunWrap.innerHTML = svg;
@@ -164,9 +180,9 @@ function openWeapon(id) {
   navDir = 0;
 
   $('#w-name').textContent = w.name;
-  const indiaChip = isIndian(w) ? (w.country.includes('India') ? '' : '<span><i class="tri"></i>Indian service</span>') : '';
-  $('#w-meta').innerHTML = `${indiaChip}<span>${w.country.includes('India') ? '<i class="tri"></i>' : ''}${esc(w.country)}</span><span class="acc">${w.yearLabel ?? w.year}</span><span>${esc(CARTS[w.cart].name)}</span><span>${TYPE_NAME[w.type]}</span>`;
-  document.title = `${w.name} — Arsenal`;
+  const indiaChip = isIndian(w) && !w.country.includes('India') ? `<span>${flag('India')}Indian service</span>` : '';
+  $('#w-meta').innerHTML = `${indiaChip}<span>${flags(w.country)}${esc(w.country)}</span><span class="acc">${w.yearLabel ?? w.year}</span><span>${esc(CARTS[w.cart].name)}</span><span>${TYPE_NAME[w.type]}</span>`;
+  document.title = `${w.name} — Calibre`;
   $('#manual-title').textContent = `Field manual · ${w.name}`;
   const fb = $('[data-action="fav"]');
   fb.classList.toggle('on', favs.has(id)); $('use', fb).setAttribute('href', favs.has(id) ? '#i-star' : '#i-star-o');
@@ -208,7 +224,11 @@ function renderEnvTag() {
 }
 
 function renderModes() {
-  $('#modes').innerHTML = S.w.modes.map((m) => `<button class="mode" role="radio" data-mode="${m}" aria-checked="${m === S.mode}"><span class="led"></span>${m === 'burst' ? `${S.w.burst ?? 3}-rd burst` : MODE_LABELS[m]}</button>`).join('');
+  $('#modes').innerHTML = S.modes.map((m) => {
+    const sim = (m === 'burst' && !realBurst(S.w)) || m === 'rapid';
+    const tip = m === 'burst' && sim ? 'Trigger-controlled burst — this weapon has no mechanical burst setting' : m === 'rapid' ? 'Hold to keep firing as fast as a trained shooter can' : '';
+    return `<button class="mode ${sim ? 'sim' : ''}" role="radio" data-mode="${m}" aria-checked="${m === S.mode}" ${tip ? `title="${tip}"` : ''}><span class="led"></span>${m === 'burst' ? `${S.w.burst ?? 3}-rd burst` : MODE_NAME[m]}</button>`;
+  }).join('');
 }
 $('#modes').addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
 function setMode(m) {
@@ -235,8 +255,13 @@ function renderAmmo(full) {
 function renderHeat() { $('#heat').style.width = `${Math.round(S.heat * 100)}%`; }
 
 // ------------------------------------------------------------------ firing
-const isAuto = () => S.mode === 'auto';
-const minGap = () => { const w = S.w; if (w.rpm) return 60 / w.rpm; return w.type === 'pistol' ? 0.1 : w.ammo === 'bmg' ? 0.35 : 0.14; };
+const isAuto = () => S.mode === 'auto' || (S.mode === 'rapid' && !isManual(S.w));
+const minGap = () => {
+  const w = S.w;
+  if (S.mode === 'rapid') return rapidGap(w);
+  if (w.rpm) return 60 / w.rpm;
+  return w.type === 'pistol' ? 0.1 : w.ammo === 'bmg' ? 0.35 : 0.14;
+};
 const hasAmmo = () => settings.infinite || S.ammo > 0;
 
 async function pressTrigger() {
@@ -245,7 +270,7 @@ async function pressTrigger() {
   $('#trigger').classList.add('down'); $('#hint').classList.add('gone');
   if (S.reloading || S.cycling || S.series) return;
   if (!hasAmmo()) return emptyClick();
-  startSeries(S.mode === 'auto' ? Infinity : S.mode === 'burst' ? S.w.burst ?? 3 : 1);
+  startSeries(isAuto() ? Infinity : S.mode === 'burst' ? S.w.burst ?? 3 : 1);
 }
 function releaseTrigger() {
   S.trigger = false;
@@ -283,7 +308,7 @@ function tick() {
     setTimeout(() => {
       S.series = false;
       if (w.rotary) { audio.motorStop(); gunWrap.classList.remove('spinning'); }
-      if (S.mode === 'bolt' || S.mode === 'pump') cycleAction();
+      if (isManual(w)) cycleAction();
     }, Math.max(0, (S.lastShot - now + 0.01) * 1000));
   }
 }
@@ -295,17 +320,23 @@ function stopFiring(hard = false) {
   gunWrap.classList.remove('spinning');
 }
 function cycleAction() {
-  const w = S.w, tok = S.token, pump = S.mode === 'pump';
+  const w = S.w, tok = S.token, pump = w.modes.includes('pump');
   S.cycling = true;
   const t = audio.now + 0.22;
   if (pump) audio.pump(t); else audio.boltCycle(t, w.ammo === 'bmg' ? 0.8 : 1.15);
   setTimeout(() => {
     if (tok !== S.token) return;
     gunWrap.classList.remove('cycling'); void gunWrap.offsetWidth; gunWrap.classList.add('cycling');
+    S.svg.querySelector('.bolt-g')?.animate([{ transform: 'none' }, { transform: 'translateX(-46px)', offset: 0.45 }, { transform: 'none' }], { duration: pump ? 380 : 520, easing: 'ease-in-out' });
     Haptics.seq(pump ? [30, 160, 34] : [18, 90, 22, 160, 26]);
     ejectShell(w);
   }, 260);
-  setTimeout(() => { if (tok === S.token) S.cycling = false; }, pump ? 620 : w.ammo === 'bmg' ? 1200 : 860);
+  setTimeout(() => {
+    if (tok !== S.token) return;
+    S.cycling = false;
+    // rapid mode on a bolt/pump gun: keep working the action while the trigger is held
+    if (S.trigger && S.mode === 'rapid' && hasAmmo() && !S.reloading) startSeries(1);
+  }, pump ? 620 : w.ammo === 'bmg' ? 1200 : 860);
 }
 
 // ------------------------------------------------------------------ effects
@@ -367,7 +398,15 @@ function shotFx(item) {
     if (!soft) particles.sparks(mz.x, mz.y, item.rapid ? 0.5 : 1 + p.power);
     if (fp.shape === 'brake') particles.dust(mz.x - 10, mz.y, 1.4, sc.dust);
   }
-  if (S.mode !== 'bolt' && S.mode !== 'pump' && (!item.rapid || Math.random() < 0.6)) ejectShell(w);
+  if (!isManual(w) && (!item.rapid || Math.random() < 0.6)) ejectShell(w);
+  // the action moves: pistol slides cycle (and lock back on empty), charging handles reciprocate
+  const cyc = Math.max(40, Math.min(90, item.gap * 900));
+  const slide = S.svg.querySelector('.slide-g');
+  if (slide) {
+    const tr = S.meta.slideTravel;
+    if (item.last) { slide.animate([{ transform: 'none' }, { transform: `translateX(${-tr}px)` }], { duration: cyc / 2, fill: 'forwards' }); S.slideLocked = true; }
+    else slide.animate([{ transform: 'none' }, { transform: `translateX(${-tr}px)`, offset: 0.4 }, { transform: 'none' }], { duration: cyc });
+  } else if (!isManual(w)) S.svg.querySelector('.bolt-g')?.animate([{ transform: 'none' }, { transform: 'translateX(-22px)', offset: 0.4 }, { transform: 'none' }], { duration: cyc });
   if (w.ping && item.last) {
     audio.clipPing(audio.now + 0.09);
     const e = screenPoint(S.meta.eject.x, S.meta.eject.y);
@@ -376,7 +415,10 @@ function shotFx(item) {
   }
   S.heat = Math.min(1, S.heat + 1 / hotAfter(w));
   renderAmmo(false);
-  if (item.last) { $('#reload-banner').hidden = false; $('.reload').classList.add('attn'); }
+  if (item.last) {
+    if (settings.autoreload) setTimeout(() => { if (!S.reloading && !hasAmmo()) reload(); }, w.ping ? 600 : 300);
+    else { $('#reload-banner').hidden = false; $('.reload').classList.add('attn'); }
+  }
 }
 
 function frame(ts) {
@@ -410,9 +452,10 @@ function reload() {
     for (let i = 0; i < w.capacity - S.ammo; i++) { audio.click(t + 0.3 + i * 0.4, 1300, 0.3, 0.05, 2); audio.click(t + 0.36 + i * 0.4, 2400, 0.15, 0.03); }
   } else if (w.ammo === 'belt') { audio.beltLoad(t + 0.2); audio.click(t + 1.6, 1000, 0.4, 0.06, 2); audio.charge(t + dur - 0.5); }
   else if (w.modes.includes('bolt') || w.ping) { audio.click(t + 0.15, 1600, 0.3, 0.04); audio.magIn(t + dur * 0.5); audio.boltCycle(t + dur - 0.55, 1.3); }
-  else { audio.magOut(t + 0.15); audio.magIn(t + dur * 0.55); if (S.ammo === 0) audio.charge(t + dur * 0.75); }
+  else { audio.magOut(t + 0.1); audio.magIn(t + dur * 0.6); if (S.ammo === 0) audio.charge(t + dur * 0.76); }
   setTimeout(() => tok === S.token && Haptics.seq([14]), dur * 550);
   setTimeout(() => tok === S.token && Haptics.seq([12, 80, 20]), dur * 800);
+  animateReload(w, dur);
   const rb = $('.reload');
   rb.classList.remove('attn'); rb.style.setProperty('--dur', `${dur}s`); gunWrap.style.setProperty('--dur', `${dur}s`);
   rb.classList.remove('busy'); gunWrap.classList.remove('reloading'); void rb.offsetWidth;
@@ -424,6 +467,73 @@ function reload() {
     rb.classList.remove('busy'); gunWrap.classList.remove('reloading');
     renderAmmo(false);
   }, dur * 1000);
+}
+
+/**
+ * Reload animation: the magazine drops out (and falls to the ground as a
+ * physics object with its own landing sound), a fresh one slides in, then the
+ * bolt / charging handle / slide is racked. Clips, belts and shell tubes get
+ * their own variants.
+ */
+function animateReload(w, dur) {
+  const ms = dur * 1000, svg = S.svg, mag = svg.querySelector('.mag-g'), bolt = svg.querySelector('.bolt-g'), slide = svg.querySelector('.slide-g');
+  const style = w.art.mag?.style ?? (w.art.kind === 'pistol' ? 'gripmag' : null);
+  const detachable = ['box', 'curved', 'drum', 'gripmag', 'top', 'p90'].includes(style) || w.art.kind === 'pistol';
+  const empty = S.ammo === 0;
+  const body = svg.querySelector('.gun-body');
+  const k = w.art.k ?? (w.art.kind === 'pistol' ? 1 : 1.6);
+  const ghost = (html) => { const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.innerHTML = html; body.appendChild(g); return g; };
+  if (w.ammo === 'shell') {
+    // shells pushed one by one into the loading port under the receiver
+    const x = w.art.rec.x0 + 60, y = (w.art.rec.bot + 4) * k, n = w.capacity - S.ammo;
+    for (let i = 0; i < n; i++) {
+      const g = ghost(`<rect x="${x}" y="${y}" width="44" height="18" rx="3" fill="#b71c1c"/><rect x="${x + 34}" y="${y}" width="10" height="18" fill="#d6a84a"/>`);
+      const a = g.animate([{ transform: 'translate(-30px, 70px)', opacity: 0 }, { transform: 'translate(-30px, 34px)', opacity: 1, offset: 0.35 }, { transform: 'translate(20px, -6px)', opacity: 0 }], { duration: 360, delay: 260 + i * 400, fill: 'both' });
+      a.onfinish = () => g.remove();
+    }
+  } else if (detachable && mag) {
+    // eject: a clone of the real magazine artwork tumbles to the floor, bounces and lies flat
+    const r = mag.getBoundingClientRect(), m = svg.getScreenCTM();
+    if (settings.particles && r.width && m) {
+      const scale = Math.hypot(m.a, m.b) || 1;
+      const floorY = stage.getBoundingClientRect().top + stage.clientHeight * 0.9;
+      const dy = (floorY - r.bottom + Math.min(r.width, r.height) * 0.4) / scale;
+      const clone = mag.cloneNode(true);
+      clone.classList.remove('mag-g'); clone.style.transformBox = 'fill-box'; clone.style.transformOrigin = 'center';
+      body.appendChild(clone);
+      const fall = 520 + Math.min(300, dy * 0.4);
+      const spin = r.height > r.width ? -90 : -15;
+      clone.animate([
+        { transform: 'none', easing: 'cubic-bezier(.5,0,1,1)' },
+        { transform: `translate(-30px, ${dy}px) rotate(${spin * 0.8}deg)`, offset: 0.62, easing: 'ease-out' },
+        { transform: `translate(-42px, ${dy - 18 / scale}px) rotate(${spin * 0.95}deg)`, offset: 0.76, easing: 'ease-in' },
+        { transform: `translate(-50px, ${dy}px) rotate(${spin}deg)`, offset: 0.9 },
+        { transform: `translate(-52px, ${dy}px) rotate(${spin}deg)` },
+      ], { duration: fall, fill: 'forwards' });
+      const mat = w.art.mag?.mat ?? w.art.magBase ?? 'blued';
+      setTimeout(() => audio.magDrop(audio.now, { heavy: Math.min(1, r.height / 120), polymer: /poly|clear/.test(mat) }), fall * 0.62);
+      setTimeout(() => clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).onfinish = () => clone.remove(), fall + 1400);
+    }
+    mag.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(30px)' }], { duration: 90, fill: 'forwards', easing: 'ease-in' });
+    setTimeout(() => {
+      mag.animate([{ opacity: 0, transform: 'translate(-24px, 230px) rotate(-6deg)' }, { opacity: 1, transform: 'translate(-10px, 130px) rotate(-3deg)', offset: 0.35 }, { opacity: 1, transform: 'translate(0, 8px)', offset: 0.85 }, { opacity: 1, transform: 'none' }],
+        { duration: ms * 0.28, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
+    }, ms * 0.32);
+  } else if (style === 'belt' && mag) {
+    mag.animate([{ opacity: 1 }, { opacity: 0, offset: 0.2 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: ms * 0.8 });
+  } else if (w.art.rec) {
+    // stripper / en-bloc clip pressed in from the top
+    const x = (w.art.eject?.x ?? w.art.rec.x0 + 40) - 20, y = w.art.rec.top * k - 14;
+    const g = ghost(`<rect x="${x}" y="${y}" width="50" height="9" fill="#6b6f74"/>${[0, 1, 2, 3, 4].map((i) => `<rect x="${x + 4 + i * 9}" y="${y - 40}" width="7" height="40" rx="3" fill="#d6a84a"/>`).join('')}`);
+    g.animate([{ transform: 'translateY(-70px)', opacity: 0 }, { transform: 'translateY(-30px)', opacity: 1, offset: 0.35 }, { transform: 'translateY(10px)', opacity: 1, offset: 0.8 }, { transform: 'translateY(26px)', opacity: 0 }], { duration: ms * 0.45, delay: ms * 0.18, fill: 'both' }).onfinish = () => g.remove();
+  }
+  // rack the action at the end
+  const rackAt = ms * 0.76;
+  if (slide) {
+    if (S.slideLocked) setTimeout(() => { slide.getAnimations().forEach((a) => a.cancel()); slide.animate([{ transform: `translateX(${-S.meta.slideTravel}px)` }, { transform: 'none' }], { duration: 90, easing: 'ease-in' }); S.slideLocked = false; }, rackAt);
+  } else if (bolt && (empty || isManual(w))) {
+    setTimeout(() => bolt.animate([{ transform: 'none' }, { transform: 'translateX(-50px)', offset: 0.4 }, { transform: 'translateX(-50px)', offset: 0.55 }, { transform: 'none' }], { duration: 360, easing: 'ease-in-out' }), rackAt);
+  }
 }
 
 // ------------------------------------------------------------------ input
@@ -446,7 +556,7 @@ document.addEventListener('keydown', (e) => {
   if ($('#view-sim').hidden || e.target.matches('input, select, textarea') || $('#settings').open || $('#scenes').open) return;
   if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!e.repeat) pressTrigger(); }
   else if (e.key === 'r' || e.key === 'R') reload();
-  else if (e.key === 'm' || e.key === 'M') { const m = S.w.modes; setMode(m[(m.indexOf(S.mode) + 1) % m.length]); }
+  else if (e.key === 'm' || e.key === 'M') { const m = S.modes; setMode(m[(m.indexOf(S.mode) + 1) % m.length]); }
   else if (e.key === 'ArrowRight') step(1);
   else if (e.key === 'ArrowLeft') step(-1);
   else if (e.key === 'i' || e.key === 'I') toggleManual();
@@ -489,7 +599,9 @@ async function toggle(name) {
   }
   saveSettings(); syncToggles();
 }
+function syncAutoReload() { $('[data-action="autoreload"]').setAttribute('aria-pressed', settings.autoreload); }
 function syncToggles() {
+  syncAutoReload();
   for (const n of ['sound', 'vibrate', 'flash', 'torch', 'shake']) { const b = $(`[data-tog="${n}"]`); b.classList.toggle('on', !!settings[n]); b.setAttribute('aria-pressed', !!settings[n]); }
   if (!Haptics.supported) $('[data-tog="vibrate"]').classList.add('na');
 }
@@ -505,7 +617,7 @@ function onMotion(e) {
     lastShake = now;
     if (S.reloading || S.cycling || S.series) return;
     if (!hasAmmo()) return emptyClick();
-    audio.unlock().then(() => startSeries(S.mode === 'auto' ? 5 : S.mode === 'burst' ? S.w.burst ?? 3 : 1));
+    audio.unlock().then(() => startSeries(isAuto() ? 5 : S.mode === 'burst' ? S.w.burst ?? 3 : 1));
   }
 }
 
@@ -541,7 +653,7 @@ async function fullscreen() {
       await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
       if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
     } else await document.exitFullscreen();
-  } catch { toast('Fullscreen not supported here — add Arsenal to your home screen instead.'); }
+  } catch { toast('Fullscreen not supported here — add Calibre to your home screen instead.'); }
 }
 function toggleManual(force) { const m = $('#manual'); m.classList.toggle('open', force ?? !m.classList.contains('open')); }
 
@@ -556,6 +668,7 @@ document.addEventListener('click', (e) => {
   else if (a === 'prev') step(-1);
   else if (a === 'next') step(1);
   else if (a === 'reload') reload();
+  else if (a === 'autoreload') { settings.autoreload = !settings.autoreload; saveSettings(); syncAutoReload(); toast(settings.autoreload ? 'Auto reload ON — reloads by itself when empty' : 'Auto reload OFF', 1500); }
   else if (a === 'fav') {
     const id = S.w.id;
     favs.has(id) ? favs.delete(id) : favs.add(id);
@@ -656,14 +769,14 @@ function renderTab() {
       <h3>Range</h3>${rangeSvg(w)}
       <h3>Ammunition to scale</h3>${cartridgeSvg(w)}
       <h3>Field reliability</h3>${envBars(w)}
-      <h3>Used by</h3><div class="wars">${w.users.map((u) => `<span class="${INDIAN_UNITS.has(u) ? 'unit' : ''}">${USER_NAME[u]}</span>`).join('')}</div>
+      <h3>Used by</h3><div class="wars">${w.users.length ? w.users.map((u) => `<span class="${INDIAN_UNITS.has(u) ? 'unit' : ''}">${USER_NAME[u]}</span>`).join('') : '<span>Civilian &amp; sport shooting</span>'}</div>
       <h3>Full specification</h3>
-      <table class="specs">${[['Calibre', w.caliber], ['Action', w.action], ['Fire modes', w.modes.map((m) => MODE_LABELS[m]).join(', ')], ['Designer', w.designer], ['Country', w.country], ['Introduced', w.yearLabel ?? w.year]].map(([k, v]) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>
+      <table class="specs">${[['Calibre', w.caliber], ['Action', w.action], ['Fire modes (real)', w.modes.map((m) => MODE_LABELS[m]).join(', ')], ['Designer', w.designer], ['Country', w.country], ['Introduced', w.yearLabel ?? w.year]].map(([k, v]) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>
       <p class="viz-note">Typical published values; they vary by variant and ammunition. Reliability ratings are editorial estimates.</p>`;
   } else if (tab === 'overview') {
     b.innerHTML = `${w.nickname ? `<p class="nick">${esc(w.nickname)}</p>` : ''}<p class="lead">${esc(w.overview)}</p>
       <div class="facts">
-        <div class="tile"><span>Country</span><b>${esc(w.country)}</b></div><div class="tile"><span>Introduced</span><b>${w.yearLabel ?? w.year}</b></div>
+        <div class="tile"><span>Country</span><b class="flagline">${flags(w.country)}${esc(w.country)}</b></div><div class="tile"><span>Introduced</span><b>${w.yearLabel ?? w.year}</b></div>
         <div class="tile wide"><span>Designer</span><b>${esc(w.designer)}</b></div>
       </div>
       <h3>Service history</h3><p>${esc(w.history)}</p>
@@ -718,6 +831,7 @@ $('#settings').addEventListener('input', (e) => {
   else if (k === 'amb') { settings.amb = +t.value; audio.setAmbientVolume(settings.amb); }
   else if (k === 'haptic') { settings.haptic = +t.value; Haptics.intensity = settings.haptic; Haptics.reset(); Haptics.seq([60]); }
   else if (t.type === 'checkbox') settings[k] = t.checked;
+  if (k === 'autoreload') syncAutoReload();
   if (k === 'infinite' && S.w) { S.ammo = S.w.capacity; renderAmmo(false); }
   if (k === 'weather') applyScene(settings.scene);
   saveSettings();
@@ -757,7 +871,7 @@ function route() {
     if (settings.torch) { settings.torch = false; Torch.disable(); syncToggles(); }
     audio.stopAmbient(); weather.stop();
     $('#view-sim').hidden = true; $('#view-armory').hidden = false;
-    document.title = 'Arsenal — Gun Simulator & Field Manual';
+    document.title = 'Calibre — Gun Simulator & Field Manual · Vajra Games';
     keepAwake(false);
   }
   checkRotate();
@@ -779,5 +893,8 @@ function gate() {
 }
 
 // ------------------------------------------------------------------ boot
+// Splash: the Vajra mark draws in over ~0.5 s, names rise, then it fades.
+const SPLASH_MS = 1150;
+setTimeout(() => { const sp = $('#splash'); sp.classList.add('done'); setTimeout(() => sp.remove(), 400); }, SPLASH_MS);
 buildFilters(); renderGrid(); renderHero(); syncToggles(); route(); gate();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

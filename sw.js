@@ -1,9 +1,9 @@
 // Offline cache: app shell is cached on install, everything else is
 // served stale-while-revalidate so updates land on the next visit.
-const CACHE = 'arsenal-v2';
+const CACHE = 'calibre-v3';
 const SHELL = [
   './', 'index.html', 'css/app.css',
-  'js/app.js', 'js/data.js', 'js/render.js', 'js/audio.js', 'js/fx.js', 'js/scenes.js',
+  'js/app.js', 'js/data.js', 'js/render.js', 'js/audio.js', 'js/fx.js', 'js/scenes.js', 'js/flags.js', 'js/data-world.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

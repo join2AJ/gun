@@ -1,4 +1,6 @@
-# Arsenal — Gun Simulator & Field Guide
+# CALIBRE — Gun Simulator & Field Manual
+
+*A Vajra Games title.* **Vajra Games** is the umbrella studio brand (the vajra is Indra's thunderbolt); its hexagon thunderbolt mark appears in the start-up animation and the app icon.
 
 A web-based gun sound simulator inspired by *Gun Sounds: Gun Simulator*, with stronger UI/UX and an
 educational layer. Fire 24 historic and modern weapons from WWI to today. Every shot is
@@ -11,7 +13,8 @@ No build step and no dependencies: plain HTML/CSS/ES modules, ready for Netlify.
 
 | | |
 |---|---|
-| **39 weapons** | WWI to today, including Indian service & origin: INSAS rifle & LMG, AK-203, Pistol Auto 9mm 1A, Ishapore 2A1, Vidhwansak, ASMI, Bren, plus Tavor, Negev NG7, SIG716i, F2000, P90, Galil Sniper, M249, PKM and more. |
+| **71 weapons** | WWI to today from India, USA, Russia/USSR, China, Europe (UK, Germany, Belgium, France, Italy, Austria, Czech Rep., Switzerland), Israel, Japan and South Korea. Indian service & origin includes: INSAS rifle & LMG, AK-203, Pistol Auto 9mm 1A, Ishapore 2A1, Vidhwansak, ASMI, Bren, plus Tavor, Negev NG7, SIG716i, F2000, P90, Galil Sniper, M249, PKM and more. |
+| **Flags & origin** | Every weapon shows its country flag(s), drawn as inline SVG so they look the same on every device. Filter by origin: India, USA, Russia/USSR, China, Europe, Israel, Japan & Korea. |
 | **Filters** | Era, type (pistol, SMG, rifle, sniper/AMR, LMG, MG/GPMG, shotgun), **used by** (Army, Navy, Air Force, Special Forces, SPG, NSG, Para SF, MARCOS, Garud, Police/CAPF), Indian service & origin, favorites, search, sort by year/range/power/fire rate/recoil. |
 | **Key points** | Effective range vs max bullet travel, rounds per load, bullet size **drawn to scale**, bullet weight, muzzle energy & velocity, accuracy, rate of fire, heat behaviour, and reliability in desert / snow / jungle / mud / high altitude. Live "Intel" panel while shooting. |
 | **Sound** | Each gun's shot is pre-rendered (Web Audio, OfflineAudioContext) from layers: muzzle impulse, supersonic N-wave crack, blast, body boom, brake blast and an action sound per operating system (AK carrier slam, AR buffer "sproing", HK roller clack, pistol slide…). |
@@ -19,6 +22,9 @@ No build step and no dependencies: plain HTML/CSS/ES modules, ready for Netlify.
 | **Vibration** | Built from each gun's *actual* sound envelope + a recoil kick — every weapon feels different. Shown as a waveform in the Feel tab. |
 | **Flash** | Per-weapon muzzle flash shape (birdcage flower, brake side-blast, shotgun fireball, MG cone, compensator jets), colour, size and duration; matching flashlight (torch) pattern. |
 | **Environments** | Firing range, desert, Himalayan snow, jungle, urban, night, indoor — each changes backdrop, echo, ground surface, weather particles, ambient sound and shows the gun's reliability there. |
+| **Fire modes** | Real modes plus a trigger-controlled burst on every automatic weapon (marked *) and a hold-to-repeat **Rapid** mode on semi-auto, bolt and pump guns. |
+| **Reload** | Animated: the empty magazine drops and tumbles to the ground with a landing sound, a fresh one slides in and the bolt or slide is racked. Clips are pressed in from the top, shells go into the tube one by one and belts are swapped. Pistol slides lock back when empty. A HUD **AUTO LOAD** switch reloads automatically. |
+| **Splash** | The Vajra mark draws in (~0.5 s), then VAJRA GAMES and the CALIBRE wordmark appear. `SPLASH_MS` in `js/app.js` sets the total time. |
 | **Heat** | Barrel heat builds with sustained fire and cools over time; a hot barrel smokes. |
 | **Landscape-first** | Designed for a sideways phone; prompts to rotate in portrait (with a portrait fallback). Fullscreen + landscape lock. |
 | **PWA** | Installable, offline, wake lock. |
@@ -30,7 +36,9 @@ Keyboard: `Space` fire · `R` reload · `M` mode · `←/→` switch · `E` envi
 ```
 index.html            App shell, icon sprite and dialogs
 css/app.css           Design tokens and responsive layout (desktop, landscape phone, portrait phone)
-js/data.js            Weapon database: history, mechanism, specs, sound/feel profile, art spec
+js/data.js            Weapon database (core + Indian), cartridges, users, key-point stats
+js/data-world.js      China / Russia / Europe / USA / Asia weapons, built from art templates
+js/flags.js           Inline-SVG country flags and origin regions
 js/render.js          Procedural SVG renderer that builds each gun from parts (stock, receiver, mag…)
 js/audio.js           Synthesised gunfire engine and environments
 js/fx.js              Haptics (from sound envelope), torch patterns, particles, weather

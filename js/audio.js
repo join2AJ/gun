@@ -99,6 +99,15 @@ export function synthShot(ctx, dest, w, t = 0) {
   bus.threshold.value = -14; bus.ratio.value = 6; bus.attack.value = 0.0005; bus.release.value = 0.08;
   bus.connect(out);
 
+  if (p.suppressed) { // integral suppressor: a muffled "thup", mostly action noise
+    const n = noise(ctx, t, 0.12), g = ctx.createGain(); env(g, t, 0.55 * v, 0.002, 0.07);
+    chain(n, filt(ctx, 'bandpass', 520, 0.9), g, bus);
+    const o = ctx.createOscillator(); o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.08);
+    const og = ctx.createGain(); env(og, t, 0.35, 0.002, 0.09); o.connect(og); og.connect(bus); o.start(t); o.stop(t + 0.2);
+    const h = noise(ctx, t + 0.004, 0.05), hg = ctx.createGain(); env(hg, t + 0.004, 0.12, 0.003, 0.04); chain(h, filt(ctx, 'highpass', 2500), hg, bus);
+    (MECH[p.mech] || []).forEach(([dt, f, gn, d, q]) => metal(ctx, bus, t + dt, f, gn * 1.6, d, q, 0.5));
+    return;
+  }
   // 1. muzzle impulse — the instantaneous pressure spike
   { const n = noise(ctx, t, 0.006, 1.4), g = ctx.createGain(); env(g, t, 1.4 * v, 0.0002, 0.004 + p.power * 0.004); chain(n, g, bus); }
   // 2. supersonic N-wave crack + shock hiss
@@ -312,6 +321,19 @@ export class GunAudio {
     if (S.roll && !shell) { // brief rattle as it rolls to a stop
       const n = noise(c, tt, 0.2), g = c.createGain(); env(g, tt, 0.04 * S.roll, 0.01, 0.15);
       chain(n, filt(c, 'bandpass', f0 * 0.6, 4), g, out);
+    }
+  }
+
+  /** An empty magazine hitting the ground. */
+  magDrop(t, { heavy = 0.5, polymer = false, surface } = {}) {
+    if (!this.ctx) return;
+    const c = this.ctx, S = SURFACES[surface || this.ground] || SURFACES.concrete;
+    const out = c.createGain(); out.connect(this.bus);
+    const n = noise(c, t, 0.08), g = c.createGain(); env(g, t, 0.35 + heavy * 0.3, 0.002, S.soft ? 0.06 : 0.04);
+    chain(n, filt(c, 'lowpass', S.soft ? 400 : 1200), g, out);
+    if (S.ring > 0.2) {
+      metal(c, out, t, polymer ? 900 : 1500, 0.25 * S.ring, 0.05, 3, polymer ? 0 : 0.6);
+      metal(c, out, t + 0.12, polymer ? 1100 : 1800, 0.12 * S.ring, 0.04, 3, polymer ? 0 : 0.4);
     }
   }
 

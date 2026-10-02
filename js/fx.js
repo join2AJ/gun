@@ -121,6 +121,12 @@ export class Particles {
     });
     this._kick();
   }
+  /** A dropped magazine: tumbles to the floor, bounces once, slides to rest. */
+  mag(x, y, w, h, color, onLand) {
+    this.list.push({ t: 'mag', x: x + w / 2, y: y + h / 2, w: Math.max(8, w), h: Math.max(10, h), vx: -40 - Math.random() * 40, vy: 30, rot: 0, vr: -1.5 - Math.random() * 2,
+      life: 2.6, age: 0, color, floor: (this.floor ?? this.h - 12) - Math.min(w, h) * 0.3, onLand, landed: false });
+    this._kick();
+  }
   smoke(x, y, amount = 1, tint = '#cfd3d6') {
     for (let i = 0; i < 4 + amount * 6; i++) {
       this.list.push({ t: 'smoke', x: x + Math.random() * 10, y: y + (Math.random() - 0.5) * 8, vx: 30 + Math.random() * 90 * amount, vy: -10 - Math.random() * 30,
@@ -152,6 +158,13 @@ export class Particles {
           if (!p.landed) { p.landed = true; p.onLand && p.onLand(); }
           p.y = p.floor; p.vy *= p.sink ? 0 : -0.35; p.vx *= p.sink ? 0 : 0.6; p.vr *= 0.5;
         }
+      } else if (p.t === 'mag') {
+        p.vy += 1700 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+        if (p.y > p.floor) {
+          if (!p.landed) { p.landed = true; p.onLand && p.onLand(); }
+          p.y = p.floor; p.vy *= -0.25; p.vx *= 0.5; p.vr *= 0.3;
+          p.rot += (Math.round(p.rot / (Math.PI / 2)) * (Math.PI / 2) - p.rot) * 0.3; // settle flat
+        }
       } else if (p.t === 'smoke') { p.vx *= 0.96; p.vy *= 0.96; p.x += p.vx * dt; p.y += p.vy * dt; p.r += 22 * dt; }
       else { p.x += p.vx * dt; p.y += p.vy * dt; }
     }
@@ -167,6 +180,12 @@ export class Particles {
         const g = c.createLinearGradient(0, -p.wid / 2, 0, p.wid / 2);
         g.addColorStop(0, '#fff3c4'); g.addColorStop(0.4, p.color); g.addColorStop(1, '#4a3008');
         c.fillStyle = g; c.fillRect(-p.len / 2, -p.wid / 2, p.len, p.wid);
+        c.restore();
+      } else if (p.t === 'mag') {
+        c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.globalAlpha = Math.min(1, k * 4);
+        c.fillStyle = p.color; c.strokeStyle = 'rgba(0,0,0,.6)'; c.lineWidth = 1.5;
+        c.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); c.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(-p.w / 2 + 2, -p.h / 2 + 2, p.w * 0.25, p.h - 4);
         c.restore();
       } else if (p.t === 'smoke') {
         c.globalAlpha = k * (p.dust ? 0.35 : 0.22); c.fillStyle = p.tint;
