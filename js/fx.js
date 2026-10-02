@@ -1,5 +1,8 @@
 // Haptics, camera-torch flash and canvas particles.
 
+// Native Android app bridge (window.CalibreNative), absent in the browser.
+export const NATIVE = typeof window !== 'undefined' && window.CalibreNative ? window.CalibreNative : null;
+
 // ---------------------------------------------------------------- HAPTICS
 // Phones can't set vibration strength, only on/off timing. We therefore
 // translate the gun's *actual rendered sound* (its loudness envelope) into
@@ -7,7 +10,8 @@
 // A first "kick" pulse is sized by the gun's recoil, so a Glock taps while a
 // .50 BMG thumps — and the action clatter after the shot shows up as pulses.
 export const Haptics = {
-  supported: typeof navigator !== 'undefined' && 'vibrate' in navigator,
+  supported: NATIVE ? NATIVE.hasVibrator() : typeof navigator !== 'undefined' && 'vibrate' in navigator,
+  amplitude: NATIVE ? NATIVE.hasAmplitude() : false,
   enabled: true,
   intensity: 1,
   cache: new Map(),
@@ -40,16 +44,49 @@ export const Haptics = {
     return out;
   },
 
+  /**
+   * Native app only: a true strength curve. The recoil kick at full power, then
+   * the gun's sound envelope sampled every 10 ms as motor amplitude (0-255).
+   */
+  waveform(w, bank) {
+    const key = 'wave:' + w.id + ':' + this.intensity;
+    if (this.cache.has(key)) return this.cache.get(key);
+    const k = this.intensity, kick = Math.round(10 + w.feel.recoil * 6);
+    const t = [kick], a = [Math.min(255, Math.round((150 + w.feel.recoil * 10.5) * k))];
+    if (bank) {
+      const { envelope: e, frameMs } = bank, win = 10;
+      let quiet = 0;
+      for (let ms = kick; ms < 700; ms += win) {
+        let lvl = 0;
+        for (let i = Math.floor(ms / frameMs); i < Math.floor((ms + win) / frameMs) && i < e.length; i++) lvl = Math.max(lvl, e[i]);
+        const amp = lvl < 0.02 ? 0 : Math.max(18, Math.min(255, Math.round(255 * Math.pow(lvl * 1.8, 0.75) * k)));
+        if (!amp) { quiet += win; if (quiet > 80) break; } else quiet = 0;
+        t.push(win); a.push(amp);
+      }
+      while (a.length > 1 && a[a.length - 1] === 0) { a.pop(); t.pop(); }
+    }
+    const wave = { t, a };
+    this.cache.set(key, wave);
+    return wave;
+  },
+  _vib(pat) { return NATIVE ? NATIVE.vibratePattern(JSON.stringify(pat)) : navigator.vibrate(pat); },
+  /** Play one shot's vibration; returns false if the device refused. */
+  preview(w, bank) {
+    if (!this.supported) return false;
+    if (NATIVE) { const v = this.waveform(w, bank); return NATIVE.vibrateWave(JSON.stringify(v.t), JSON.stringify(v.a)); }
+    return navigator.vibrate(this.fromEnvelope(w, bank));
+  },
   shot(w, bank, { rapid = false, interval = 0 } = {}) {
     if (!this.enabled || !this.supported) return;
     if (rapid) {
-      const kick = (14 + w.feel.recoil * 7) * this.intensity;
-      navigator.vibrate(Math.max(8, Math.round(Math.min(interval * 0.6, kick))));
-    } else navigator.vibrate(this.fromEnvelope(w, bank));
+      const kick = (14 + w.feel.recoil * 7) * this.intensity, ms = Math.max(8, Math.round(Math.min(interval * 0.6, kick)));
+      if (NATIVE) NATIVE.vibrateOne(ms, Math.min(255, Math.round((120 + w.feel.recoil * 13) * this.intensity)));
+      else navigator.vibrate(ms);
+    } else this.preview(w, bank);
   },
-  tick(ms = 12) { if (this.enabled && this.supported) navigator.vibrate(Math.round(ms * this.intensity)); },
-  seq(pat) { if (this.enabled && this.supported) navigator.vibrate(pat.map((v, i) => (i % 2 ? v : Math.round(v * this.intensity)))); },
-  stop() { if (this.supported) navigator.vibrate(0); },
+  tick(ms = 12) { if (this.enabled && this.supported) this._vib([Math.round(ms * this.intensity)]); },
+  seq(pat) { if (this.enabled && this.supported) this._vib(pat.map((v, i) => (i % 2 ? v : Math.round(v * this.intensity)))); },
+  stop() { if (!this.supported) return; if (NATIVE) NATIVE.cancelVibration(); else navigator.vibrate(0); },
   reset() { this.cache.clear(); },
 };
 
@@ -59,10 +96,15 @@ export const Haptics = {
 // gives a long flash plus a secondary flare; a pistol a quick blink.
 export const Torch = {
   track: null, stream: null, busy: false,
-  get possible() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); },
+  get possible() { return NATIVE ? NATIVE.hasTorch() : !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); },
   get active() { return !!this.track; },
   async enable() {
     if (this.track) return true;
+    if (NATIVE) { // the app drives the LED directly — no camera permission prompt
+      if (!NATIVE.hasTorch()) throw new Error('This phone has no rear flashlight.');
+      this.track = 'native';
+      return true;
+    }
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
     const track = stream.getVideoTracks()[0];
     const caps = track.getCapabilities ? track.getCapabilities() : {};
@@ -73,10 +115,12 @@ export const Torch = {
     this.stream = stream; this.track = track;
     return true;
   },
-  disable() { if (this.stream) this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; this.track = null; },
+  disable() { if (NATIVE && this.track) NATIVE.torchPattern('[0]'); if (this.stream) this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; this.track = null; },
   async set(on) { if (this.track) { try { await this.track.applyConstraints({ advanced: [{ torch: on }] }); } catch { /* ignore */ } } },
   async pattern(pat) {
-    if (!this.track || this.busy) return;
+    if (!this.track) return;
+    if (NATIVE) { NATIVE.torchPattern(JSON.stringify(pat)); return; }
+    if (this.busy) return;
     this.busy = true;
     for (let i = 0; i < pat.length; i++) {
       if (i % 2 === 0) await this.set(true);

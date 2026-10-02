@@ -509,3 +509,10 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 @media (prefers-reduced-motion: reduce) { .splash * { animation-duration: 0.01s !important; animation-delay: 0s !important; } }
 
 .ammo-meta .inf { color: var(--cyan); font-weight: 400; margin-left: 4px; }
+
+/* native Android app: already fullscreen & landscape-locked */
+.native [data-action='fullscreen'] { display: none !important; }
+
+/* short (landscape phone) screens: the filter block is taller than the viewport, so don't pin it */
+@media (max-height: 560px) { .filters { position: static; background: none; } .hero { min-height: 0; padding: 18px 22px; } .hero-feat .art { height: 130px; } }
+.hero-feat .fstats { position: relative; z-index: 1; background: rgba(5, 8, 10, 0.78); padding: 5px 10px; box-shadow: inset 0 0 0 1px var(--line); }

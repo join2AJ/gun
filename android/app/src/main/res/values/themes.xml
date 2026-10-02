@@ -1,0 +1,8 @@
+<resources>
+    <color name="calibre_bg">#030506</color>
+    <style name="Theme.Calibre" parent="android:Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/calibre_bg</item>
+        <item name="android:statusBarColor">@color/calibre_bg</item>
+        <item name="android:navigationBarColor">@color/calibre_bg</item>
+    </style>
+</resources>

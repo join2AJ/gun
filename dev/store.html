@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../css/fonts.css"><link rel="stylesheet" href="../css/app.css">
+<style>
+ body{margin:0;background:#000;overflow:hidden}
+ .fg{position:relative;width:1024px;height:500px;overflow:hidden;font-family:var(--f-ui)}
+ .fg .scene{position:absolute;inset:0}.fg .scene svg{width:100%;height:100%}
+ .fg .shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,5,6,.97) 0%,rgba(3,5,6,.85) 40%,rgba(3,5,6,.1) 75%)}
+ .fg .gun{position:absolute;right:-30px;top:120px;width:640px;height:270px;filter:drop-shadow(0 20px 18px rgba(0,0,0,.7))}
+ .fg .gun svg{width:100%;height:100%}
+ .fg .copy{position:absolute;left:56px;top:70px}
+ .fg .studio{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.42em;font-size:15px;color:#e1ebe4}
+ .fg .studio svg{width:44px;height:44px}.fg .studio span{color:#a3f53a}
+ .fg h1{font-size:104px;margin:22px 0 6px;color:#fff;line-height:1}
+ .fg p{margin:0;font-family:var(--f-mono);color:#a3f53a;letter-spacing:.2em;font-size:18px}
+ .fg ul{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:8px;color:#c6d1ca;font-family:var(--f-body);font-size:17px}
+ .fg li::before{content:'■ ';color:#a3f53a}
+ .ic{width:512px;height:512px}
+</style></head><body>
+<div id="out"></div>
+<script type="module">
+import { byId } from '../js/data.js'; import { renderWeapon } from '../js/render.js'; import { sceneSvg } from '../js/scenes.js';
+const q = new URLSearchParams(location.search);
+const mark = await fetch('../icons/icon.svg').then(r => r.text());
+if (q.get('v') === 'icon') {
+  // Play listing icon: full square (Google applies the rounded mask itself)
+  document.getElementById('out').innerHTML = `<div class="ic">${mark.replace('rx="108"', 'rx="0"').replace('<svg ', '<svg width="512" height="512" ')}</div>`;
+} else {
+  const shield = mark.match(/<g transform="translate\(64 58\) scale\(6\)">([\s\S]*)<\/g><\/svg>/)[1];
+  const defs = mark.match(/<defs>[\s\S]*?<\/defs>/)[0];
+  document.getElementById('out').innerHTML = `<div class="fg"><div class="scene">${sceneSvg('desert')}</div><div class="shade"></div>
+    <div class="gun">${renderWeapon(byId.ak203).svg}</div>
+    <div class="copy"><div class="studio"><svg viewBox="0 0 64 64">${defs}${shield}</svg>ARTIN <span>STUDIOS</span></div>
+    <h1 class="wordmark">CAL<svg class="bi"><use href="#b"/></svg>BRE</h1><p>GUN SIMULATOR · FIELD MANUAL</p>
+    <ul><li>70+ legendary weapons</li><li>Real sound, vibration &amp; flash</li><li>Fully offline</li></ul></div></div>
+    <svg width="0" height="0" style="position:absolute"><symbol id="b" viewBox="0 0 10 40"><path d="M5 0 Q10 8 9.4 14 L9.4 16 L0.6 16 L0.6 14 Q0 8 5 0Z" fill="#c26d3a"/><rect x="0.6" y="16" width="8.8" height="22" fill="#d6a84a"/><rect x="0" y="37" width="10" height="3" fill="#a07a2a"/></symbol></svg>`;
+}
+document.body.dataset.ready = 1;
+</script></body></html>

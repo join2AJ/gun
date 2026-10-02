@@ -98,3 +98,37 @@ Alternatively, drag the folder onto <https://app.netlify.com/drop>.
 
 For entertainment and education. Sounds are synthesised approximations, and specs are typical published
 values that vary by variant. Contains flashing lights; a *Reduce flashing* option is in Settings.
+
+## Android app (Google Play)
+
+`android/` is a small native Android app (Java + WebView) that bundles the game **inside the APK**, so it works fully offline with no internet permission. A JavaScript bridge (`window.CalibreNative`) adds what browsers can't do:
+
+- **Amplitude vibration**: each shot's sound envelope drives the motor strength (0–255) in 10 ms steps, after a recoil kick (`VibrationEffect.createWaveform`). Phones without amplitude control fall back to on/off pulses.
+- **Instant flashlight** via `CameraManager.setTorchMode`, with no camera permission and the same per-gun flash patterns.
+- **Landscape lock** in the simulator, immersive fullscreen, screen kept awake, Android Back button (closes dialogs, then returns to the armory, then exits).
+
+| | |
+|---|---|
+| Package | `com.artinstudios.calibre` |
+| Min / target SDK | 26 (Android 8.0) / 36 (Android 16) |
+| Permissions | `VIBRATE` only |
+| Size | ~1.8 MB |
+
+### Build locally
+```bash
+cd android
+echo "sdk.dir=/path/to/Android/sdk" > local.properties
+# signing: create android/keystore.properties (git-ignored)
+#   storeFile=/abs/path/calibre-upload.jks
+#   storePassword=…  keyAlias=calibre-upload  keyPassword=…
+./gradlew bundleRelease assembleRelease -PversionCode=2 -PversionName=1.0.1
+# → app/build/outputs/bundle/release/app-release.aab  (upload to Play)
+# → app/build/outputs/apk/release/app-release.apk    (install on a phone)
+```
+The Gradle `syncWeb` task copies `index.html`, `css/`, `js/`, `fonts/`, `icons/` and `privacy.html` into the app on every build, so web changes ship automatically.
+
+### Build on GitHub (no Android Studio needed)
+`.github/workflows/android.yml` builds on every push. Add the repository secrets `CALIBRE_KEYSTORE_BASE64` (`base64 -w0 calibre-upload.jks`), `CALIBRE_KEYSTORE_PASSWORD`, `CALIBRE_KEY_ALIAS` and `CALIBRE_KEY_PASSWORD` to get a signed `.aab` and `.apk` under *Actions → run → Artifacts*. Use **Run workflow** to set the `versionCode`; it must increase for every Play upload.
+
+### Store listing
+Texts, Play Console answers (data safety, content rating, target audience) and graphics are in `store/`. The privacy policy is `privacy.html`, served by Netlify at `/privacy.html`.

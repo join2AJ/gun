@@ -1,7 +1,7 @@
 import { WEAPONS, byId, ERAS, TYPES, USERS, CARTS, ENV_LABELS, MODE_LABELS } from './data.js';
 import { renderWeapon } from './render.js';
 import { GunAudio } from './audio.js';
-import { Haptics, Torch, Particles, Weather } from './fx.js';
+import { Haptics, Torch, Particles, Weather, NATIVE } from './fx.js';
 import { SCENES, SCENE_ORDER, SCENE_ENV_KEY, sceneSvg } from './scenes.js';
 import { REGIONS, regionsOf, flags, flag } from './flags.js';
 
@@ -598,7 +598,7 @@ async function toggle(name) {
   else if (name === 'torch') {
     if (settings.torch) { settings.torch = false; Torch.disable(); }
     else {
-      if (!Torch.possible || !window.isSecureContext) { toast('Flashlight needs HTTPS and a camera-enabled browser.'); btn.classList.add('na'); return; }
+      if (!Torch.possible || (!NATIVE && !window.isSecureContext)) { toast('Flashlight needs HTTPS and a camera-enabled browser.'); btn.classList.add('na'); return; }
       try { btn.classList.add('na'); await Torch.enable(); settings.torch = true; btn.classList.remove('na'); toast('Flashlight armed — each weapon has its own flash pattern'); Torch.pattern([120]); }
       catch (err) { btn.classList.add('na'); toast(err.name === 'NotAllowedError' ? 'Camera permission denied — flashlight unavailable.' : err.message, 3600); return; }
     }
@@ -817,8 +817,8 @@ function renderTab() {
     $('#feel-vibe').onclick = async () => {
       // works even if the Vibration toggle is off: this is an explicit preview
       await audio.unlock();
-      const pat = Haptics.fromEnvelope(w, S.bank), total = pat.reduce((a, b) => a + b, 0);
-      const ok = Haptics.supported && navigator.vibrate(pat);
+      const pat = NATIVE ? Haptics.waveform(w, S.bank).t : Haptics.fromEnvelope(w, S.bank), total = pat.reduce((a, b) => a + b, 0);
+      const ok = Haptics.preview(w, S.bank);
       audio.shot(w);
       const sw = $('.viz .sweep');
       if (sw) sw.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(300px)' }], { duration: total, easing: 'linear' });
@@ -847,8 +847,8 @@ function openSettings() {
   ['infinite', 'recoil', 'particles', 'weather', 'softflash'].forEach((k) => { $(`#s-${k}`).checked = settings[k]; });
   $('#s-autoreload').checked = autoReload();
   $('#cap-note').textContent = [
-    `Vibration: ${Haptics.supported ? 'supported' : 'not supported in this browser'}`,
-    `Flashlight: ${Torch.possible && window.isSecureContext ? 'may be available (Chrome on Android)' : 'unavailable'}`,
+    `Vibration: ${Haptics.supported ? (Haptics.amplitude ? 'supported with strength control' : 'supported') : 'not supported here'}`,
+    `Flashlight: ${NATIVE ? (Torch.possible ? 'ready' : 'not on this phone') : Torch.possible && window.isSecureContext ? 'may be available (Chrome on Android)' : 'unavailable'}`,
     `Audio: ${window.AudioContext || window.webkitAudioContext ? 'ready' : 'missing'}`,
   ].join(' · ');
   $('#settings').showModal();
@@ -876,7 +876,10 @@ async function keepAwake(on) {
 }
 const portraitMq = window.matchMedia('(orientation: portrait) and (max-width: 720px)');
 let rotateSkipped = false;
-function checkRotate() { $('#rotate').hidden = !(portraitMq.matches && !$('#view-sim').hidden && !rotateSkipped); }
+function checkRotate() {
+  if (NATIVE) { NATIVE.setLandscape(!$('#view-sim').hidden); $('#rotate').hidden = true; return; }
+  $('#rotate').hidden = !(portraitMq.matches && !$('#view-sim').hidden && !rotateSkipped);
+}
 portraitMq.addEventListener?.('change', () => { checkRotate(); setTimeout(() => { particles.resize(); weather.set(settings.weather ? scene().weather : null); }, 300); });
 $('#rotate-skip').onclick = () => { rotateSkipped = true; checkRotate(); };
 
@@ -920,9 +923,19 @@ function gate() {
   $('#gate-go').onclick = async () => { await audio.unlock(); store.set('gated', true); g.hidden = true; Haptics.seq([30, 60, 30]); };
 }
 
+// Android back button (native app): close the top-most thing, else go back to the armory.
+window.calibreBack = () => {
+  const open = $$('dialog[open]');
+  if (open.length) { open[open.length - 1].close(); return true; }
+  if ($('#manual').classList.contains('open')) { toggleManual(false); return true; }
+  if (!$('#view-sim').hidden) { location.hash = '#/'; return true; }
+  return false; // armory: let the app close
+};
+if (NATIVE) document.documentElement.classList.add('native');
+
 // ------------------------------------------------------------------ boot
 // Splash: the ARTIN mark animates in (~0.9 s), names rise, then it fades.
 const SPLASH_MS = 1500;
 setTimeout(() => { const sp = $('#splash'); sp.classList.add('done'); setTimeout(() => sp.remove(), 400); }, SPLASH_MS);
 buildFilters(); renderGrid(); renderHero(); syncToggles(); route(); gate();
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if (!NATIVE && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

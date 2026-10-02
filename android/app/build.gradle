@@ -1,0 +1,64 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Release signing: android/keystore.properties (local, git-ignored) or env vars (CI).
+def ksProps = new Properties()
+def ksFile = rootProject.file('keystore.properties')
+if (ksFile.exists()) ksFile.withInputStream { ksProps.load(it) }
+def ks = { String key, String env -> ksProps.getProperty(key) ?: System.getenv(env) }
+
+android {
+    namespace 'com.artinstudios.calibre'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.artinstudios.calibre'
+        minSdk 26 // Android 8.0+: VibrationEffect (amplitude vibration) needs API 26
+        targetSdk 36
+        // Bump versionCode for every Play upload (or pass -PversionCode=N in CI).
+        versionCode((project.findProperty('versionCode') ?: '1') as int)
+        versionName project.findProperty('versionName') ?: '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            def store = ks('storeFile', 'CALIBRE_KEYSTORE')
+            if (store) {
+                storeFile file(store)
+                storePassword ks('storePassword', 'CALIBRE_KEYSTORE_PASSWORD')
+                keyAlias ks('keyAlias', 'CALIBRE_KEY_ALIAS')
+                keyPassword ks('keyPassword', 'CALIBRE_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (ks('storeFile', 'CALIBRE_KEYSTORE')) signingConfig signingConfigs.release
+        }
+    }
+
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets {
+        main { assets.srcDirs += "${layout.buildDirectory.get().asFile}/generated/web" }
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.17.1'
+}
+
+// Copy the web game (repo root) into the APK as offline assets/www.
+def syncWeb = tasks.register('syncWeb', Sync) {
+    from(rootProject.file('..')) {
+        include 'index.html', 'privacy.html', 'css/**', 'js/**', 'fonts/**', 'icons/**', 'manifest.webmanifest'
+    }
+    into layout.buildDirectory.dir('generated/web/www')
+}
+tasks.named('preBuild') { dependsOn syncWeb }
