@@ -9,7 +9,7 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
-## [1.2.3] — 2026-10-02 · Play build 7
+## [1.2.3] — 2026-10-02 · Play build 7 · `2a15e4e`
 ### Fixed
 - The banner ad never came back after one failed load (AdView only refreshes after a success). Failed banner loads now retry by themselves (30 s, 60 s, 2 min … up to 5 min).
 ### Added
