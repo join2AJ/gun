@@ -8,7 +8,7 @@ Nothing changes without a record, and every release can be restored.
 2. **`version.json` is the only place the version lives.** The Android build reads it and Settings shows it.
    - `version`: semantic version. PATCH (1.1.**1**) for fixes and tweaks, MINOR (1.**2**.0) for new features, MAJOR (**2**.0.0) for big or breaking changes.
    - `versionCode`: a whole number that **must increase for every Google Play upload**. Play rejects equal or lower numbers.
-3. **Every release gets a git tag** `vX.Y.Z` on its commit, which is the restore point.
+3. **Every release gets a git tag** `vX.Y.Z` on its commit, which is the restore point. The *Tag releases* GitHub workflow creates missing tags automatically from the commit hashes in `CHANGELOG.md` and from `version.json`. Locally, `scripts/tag-releases.sh` does the same.
 4. **History is never rewritten.** Undoing happens with *new* commits (see Rollback), so nothing is ever lost.
 5. **Every released `.aab`/`.apk` is kept.** Attach them to a GitHub Release for that tag, or keep the Actions artifact.
 
@@ -22,8 +22,9 @@ The GitHub check `.github/workflows/changelog.yml` (also runnable locally as `sc
 # 3. bump version.json → {"version": "1.2.0", "versionCode": 4, "date": "YYYY-MM-DD"}
 scripts/check-changelog.sh                  # must print ✓
 git commit -am "Release 1.2.0"
-git tag -a v1.2.0 -m "Calibre 1.2.0"
-git push && git push origin v1.2.0
+git push                                    # the Tag releases workflow then tags v1.2.0 automatically
+# (or manually: git tag -a v1.2.0 -m "Calibre 1.2.0" && git push origin v1.2.0)
+# 4b. once tagged, add that commit's short hash to its CHANGELOG heading in the next change:  · `abc1234`
 # 4. build: cd android && ./gradlew bundleRelease assembleRelease   (or run the GitHub "Android build" workflow)
 # 5. upload app-release.aab to Play (internal testing first), and keep the file with the tag
 ```
@@ -38,7 +39,8 @@ Netlify dashboard → your site → **Deploys** → open an older deploy → **P
 ```bash
 git tag -l                                  # list restore points
 git diff v1.1.0 HEAD --stat                 # see what changed since then
-scripts/rollback.sh v1.1.0                  # restores files to v1.1.0 (keeps CHANGELOG/version.json)
+scripts/rollback.sh v1.1.0                  # restores files to v1.1.0 (keeps CHANGELOG/version.json);
+                                            # works even without the tag, using the commit hash in CHANGELOG.md
 # then bump version.json (higher versionCode), add a CHANGELOG entry
 #   "### Changed — Rolled back to v1.1.0 because …", commit, tag, push.
 ```

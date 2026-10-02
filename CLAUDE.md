@@ -6,7 +6,7 @@ Calibre is a gun-sound simulator and field manual by ARTIN Studios. It's a stati
 1. **Record every change in `CHANGELOG.md`.** Put it under `## [Unreleased]`, or under a new version section when releasing, using *Added / Changed / Fixed / Removed* headings. No change is too small.
 2. **Keep `version.json` in step.** Bump `version` (semver) and `versionCode` (+1, must always increase) for every release or new Android build. The version string must have a matching `## [x.y.z]` heading in the CHANGELOG.
 3. **Run `scripts/check-changelog.sh` before committing.** It must print ✓.
-4. **Tag every release** `vX.Y.Z` (annotated) and push the tag.
+4. **Tag every release** `vX.Y.Z`. The *Tag releases* workflow does this on push. After a release, add its commit short hash to its CHANGELOG heading (`· \`abc1234\``) so the tag and `scripts/rollback.sh` can always find it.
 5. **Never rewrite history** (no force-push, rebase or amend on pushed commits). Undo with `git revert` or `scripts/rollback.sh <tag>`, then record that in the CHANGELOG.
 6. Update `README.md` / `docs/` when behaviour, structure or setup changes.
 7. **Never commit secrets.** That includes `*.jks`, `android/keystore.properties`, real passwords and personal emails. Ad and product IDs are not secret.

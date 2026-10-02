@@ -7,7 +7,12 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 TAG="${1:?usage: scripts/rollback.sh <tag>   (see: git tag -l)}"
-git rev-parse -q --verify "$TAG^{commit}" >/dev/null || { echo "No such tag: $TAG"; git tag -l; exit 1; }
+if ! git rev-parse -q --verify "$TAG^{commit}" >/dev/null; then
+  # no tag yet (e.g. not created on this machine): find the commit in CHANGELOG.md
+  V="${TAG#v}"; H=$(grep -E "^## \[$V\].*\`[0-9a-f]{7,40}\`" CHANGELOG.md | sed -E 's/.*`([0-9a-f]+)`.*/\1/' | head -1)
+  [ -n "$H" ] && git rev-parse -q --verify "$H^{commit}" >/dev/null || { echo "No tag or CHANGELOG commit for $TAG"; git tag -l; exit 1; }
+  echo "Using commit $H for $TAG (from CHANGELOG.md)"; TAG="$H"
+fi
 [ -z "$(git status --porcelain)" ] || { echo "Working tree not clean — commit or stash first."; exit 1; }
 
 KEEP="CHANGELOG.md version.json"

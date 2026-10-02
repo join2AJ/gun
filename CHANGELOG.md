@@ -20,6 +20,7 @@ _Nothing yet._
   - `scripts/rollback.sh`.
   - `CLAUDE.md` with the rules for future sessions.
   - A GitHub check that fails when code changes without a CHANGELOG entry.
+  - `scripts/tag-releases.sh` and a "Tag releases" GitHub workflow that create the restore-point tags `vX.Y.Z` automatically from this file after each push.
 - The version number is shown in Settings ("Calibre v1.1.1 · build 3").
 
 ## [1.1.0] — 2026-10-02 · Play build 2 · `c4dea63`
