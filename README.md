@@ -1,6 +1,6 @@
 # CALIBRE — Gun Simulator & Field Manual
 
-*An ARTIN Studios title.* **ARTIN Studios** (A-jay · R-eyansh · TIN-tin) is the umbrella studio brand for this and future games. Its mark is a shield holding a bold "A" peak with a glowing apex. It appears in the start-up animation and the app icon.
+*An ARTIN Studios title.* **ARTIN Studios** is the umbrella studio brand for this and future games. Its mark is a shield holding a bold "A" peak with a glowing apex. It appears in the start-up animation and the app icon.
 
 A web-based gun sound simulator inspired by *Gun Sounds: Gun Simulator*, with stronger UI/UX and an
 educational layer. Fire 24 historic and modern weapons from WWI to today. Every shot is
