@@ -926,7 +926,7 @@ Store.on(() => {
   if ($('#unlock').open && ev?.type === 'rewardedReady') { const b = $('#unlock [data-action="watch-ad"]'); if (b) b.textContent = adLabel(); }
   if (!$('#view-armory').hidden) renderGrid();
   renderLock();
-  Store.setBanner(!$('#view-armory').hidden);
+  Store.setBanner(bannerSpot());
 });
 $$('[data-action="store"]').forEach((b) => { b.hidden = !Store.enabled; });
 
@@ -970,7 +970,7 @@ function route() {
     keepAwake(false);
   }
   checkRotate();
-  Store.setBanner(!$('#view-armory').hidden);
+  Store.setBanner(bannerSpot());
 }
 window.addEventListener('hashchange', route);
 document.addEventListener('visibilitychange', () => {
@@ -982,10 +982,17 @@ window.addEventListener('pointerdown', async () => {
   if (audio.ambientOn && !audio.amb && !$('#view-sim').hidden) audio.startAmbient();
 }, { capture: true });
 
+// The banner only shows on the weapon list, never over the welcome screen or the range.
+function bannerSpot() { return !$('#view-armory').hidden && $('#gate').hidden; }
 function gate() {
   if (store.get('gated', false)) return;
   const g = $('#gate'); g.hidden = false;
-  $('#gate-go').onclick = async () => { await audio.unlock(); store.set('gated', true); g.hidden = true; Haptics.seq([30, 60, 30]); };
+  if (NATIVE) {
+    $('#gate-vibe').textContent = 'Every weapon vibrates differently — strength follows the sound of each shot.';
+    $('#gate-torch').textContent = 'Your flashlight flashes with each shot (no camera permission needed).';
+  }
+  Store.setBanner(false);
+  $('#gate-go').onclick = async () => { await audio.unlock(); store.set('gated', true); g.hidden = true; Store.setBanner(bannerSpot()); Haptics.seq([30, 60, 30]); };
 }
 
 // Android back button (native app): close the top-most thing, else go back to the armory.

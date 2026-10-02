@@ -9,6 +9,13 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
+## [1.2.2] — 2026-10-02 · Play build 6
+### Fixed
+- The ad banner no longer shows over the first-run welcome screen; it appears once you enter the weapon list.
+- In the Android app the welcome screen no longer mentions browsers, Chrome or camera permission. It now says vibration follows each shot's sound and the flashlight needs no permission.
+### Changed
+- Service-worker cache bumped to `calibre-v11`.
+
 ## [1.2.1] — 2026-10-02 · Play build 5 · `6e2388d`
 ### Fixed
 - The "Watch a short video" button could stay on "Loading…" forever: when AdMob had no rewarded ad (common for new ad units), the app never asked again. Failed loads now retry by themselves (30 s, 60 s, 2 min … up to 5 min), opening the unlock dialog asks straight away, and the button shows **Retry** with the AdMob error code.
