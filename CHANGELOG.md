@@ -8,7 +8,10 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 `Play build` is the Android `versionCode`. It must increase with every Google Play upload.
 
 ## [Unreleased]
-_Nothing yet._
+### Fixed
+- GitHub "Android build" workflow: it had failed on every run because the `android-actions/setup-android` step crashes on current runners. It now uses the runner's preinstalled Android SDK.
+### Changed
+- GitHub workflows updated to `actions/checkout@v5`, `setup-java@v5` and `upload-artifact@v5`, replacing the deprecated Node 20 versions.
 
 ## [1.1.1] — 2026-10-02 · Play build 3
 ### Added
