@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160"><defs><linearGradient id="mk-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2ff8c"/><stop offset=".55" stop-color="#a3f53a"/><stop offset="1" stop-color="#4f9e12"/></linearGradient>
+      <radialGradient id="mk-bg" cx=".5" cy=".38" r=".7"><stop offset="0" stop-color="#1d3a22"/><stop offset="1" stop-color="#060a07"/></radialGradient>
+      </defs>
+  <rect width="520" height="160" fill="#05080a"/>
+  <g transform="translate(16 14) scale(2)"><path class="m-fill" d="M32 4 L56 12 V31 C56 45 46 54 32 60 C18 54 8 45 8 31 V12 Z" fill="url(#mk-bg)"/>
+        <path class="m-shield" d="M32 4 L56 12 V31 C56 45 46 54 32 60 C18 54 8 45 8 31 V12 Z" fill="none" stroke="#a3f53a" stroke-width="2.6" stroke-linejoin="round"/>
+        <path class="m-inner" d="M32 8 L52 14.8 V31 C52 43 43.5 50.7 32 55.6 C20.5 50.7 12 43 12 31 V14.8 Z" fill="none" stroke="#a3f53a" stroke-width=".8" opacity=".45"/>
+        <path class="m-a" d="M32 14 L47.5 48 L40.5 48 L32 28.5 L23.5 48 L16.5 48 Z" fill="url(#mk-a)"/>
+        <path class="m-bar" d="M17 39 H26.2 M37.8 39 H47" fill="none" stroke="#a3f53a" stroke-width="2.4"/>
+        <circle class="m-dot" cx="32" cy="39" r="1.9" fill="#fff"/>
+        <path class="m-star s1" d="M32 4.999999999999999 Q32 9.2 36.2 9.2 Q32 9.2 32 13.399999999999999 Q32 9.2 27.8 9.2 Q32 9.2 32 4.999999999999999 Z" fill="#fff"/>
+        <path class="m-star s2" d="M18.5 24.4 Q18.5 27 21.1 27 Q18.5 27 18.5 29.6 Q18.5 27 15.9 27 Q18.5 27 18.5 24.4 Z" fill="#e9ffc8"/>
+        <path class="m-star s3" d="M45.5 24.4 Q45.5 27 48.1 27 Q45.5 27 45.5 29.6 Q45.5 27 42.9 27 Q45.5 27 45.5 24.4 Z" fill="#e9ffc8"/></g>
+  <text x="160" y="84" font-family="Chakra Petch, Rajdhani, Arial, sans-serif" font-weight="700" font-size="56" letter-spacing="10" fill="#ffffff">ARTIN</text>
+  <text x="163" y="114" font-family="Chakra Petch, Rajdhani, Arial, sans-serif" font-weight="600" font-size="18" letter-spacing="12" fill="#a3f53a">STUDIOS</text>
+  <text x="164" y="140" font-family="Share Tech Mono, monospace" font-size="12" letter-spacing="3" fill="#5b6b63">AJAY · REYANSH · TINTIN</text>
+</svg>

@@ -481,23 +481,30 @@ kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow:
 @media (max-height: 520px) { .autold { height: 40px; padding: 0 8px; font-size: 9.5px; } }
 @media (max-width: 720px) { .autold span { display: none; } .autold { padding: 0 12px; } }
 
-/* splash: ARTIN mark draws in (~0.5 s), studio + game names rise, then fades */
+/* splash: ARTIN mark — shield draws, the A rises, the sight snaps in, three stars sparkle */
 .splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(ellipse at center, #0d1a12, #030506 70%); transition: opacity 0.35s, visibility 0.35s; }
 .splash.done { opacity: 0; visibility: hidden; pointer-events: none; }
 .splash-in { display: grid; justify-items: center; gap: 10px; }
-.splash-mark { width: 116px; height: 116px; color: var(--acc); filter: drop-shadow(0 0 18px rgba(163, 245, 58, 0.55)); }
-.splash-mark [pathLength] { stroke-dasharray: 1; stroke-dashoffset: 1; animation: vdraw 0.5s cubic-bezier(.6, 0, .3, 1) forwards; }
-.splash-mark .v-bolt [pathLength] { animation-delay: 0.08s; }
-.splash-mark .v-ticks { animation-delay: 0.25s !important; }
-.splash-mark .v-core { transform-origin: 32px 15px; transform: scale(0); animation: vcore 0.35s 0.35s cubic-bezier(.3, 1.6, .5, 1) forwards; }
+.splash-mark { width: 124px; height: 124px; filter: drop-shadow(0 0 18px rgba(163, 245, 58, 0.45)); animation: vflash 0.6s 0.7s ease-out; overflow: visible; }
+.splash-mark [pathLength] { stroke-dasharray: 1; stroke-dashoffset: 1; animation: vdraw 0.45s cubic-bezier(.6, 0, .3, 1) forwards; }
+.splash-mark .m-inner { animation-delay: 0.12s; }
+.splash-mark .m-bar { animation-delay: 0.42s; animation-duration: 0.25s; }
+.splash-mark .m-fill { opacity: 0; animation: fadeIn2 0.35s 0.1s forwards; }
+.splash-mark .m-a { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); animation: arise 0.35s 0.18s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.splash-mark .m-dot { transform-box: fill-box; transform-origin: center; transform: scale(0); animation: pop 0.25s 0.55s cubic-bezier(.3, 1.8, .5, 1) forwards; }
+.splash-mark .m-star { transform-box: fill-box; transform-origin: center; transform: scale(0) rotate(-90deg); animation: sparkle 0.4s cubic-bezier(.3, 1.7, .5, 1) forwards; }
+.splash-mark .s1 { animation-delay: 0.6s; } .splash-mark .s2 { animation-delay: 0.72s; } .splash-mark .s3 { animation-delay: 0.8s; }
 @keyframes vdraw { to { stroke-dashoffset: 0; } }
-@keyframes vcore { to { transform: scale(1); } }
-.splash-mark { animation: vflash 0.5s 0.45s ease-out; }
-@keyframes vflash { 30% { filter: drop-shadow(0 0 40px rgba(163, 245, 58, 1)) brightness(1.6); } }
+@keyframes fadeIn2 { to { opacity: 1; } }
+@keyframes arise { to { transform: scaleY(1); } }
+@keyframes pop { to { transform: scale(1); } }
+@keyframes sparkle { 60% { transform: scale(1.5) rotate(10deg); } to { transform: scale(1) rotate(0); } }
+@keyframes vflash { 35% { filter: drop-shadow(0 0 42px rgba(163, 245, 58, 1)) brightness(1.4); } }
+.brand-mark, .gate-mark { overflow: visible; }
 .splash-studio, .splash-game { opacity: 0; transform: translateY(8px); animation: rise 0.35s ease-out forwards; }
-.splash-studio { font-family: var(--f-ui); font-weight: 700; letter-spacing: 0.5em; font-size: 15px; color: var(--text); animation-delay: 0.3s; margin-right: -0.5em; }
+.splash-studio { font-family: var(--f-ui); font-weight: 700; letter-spacing: 0.5em; font-size: 15px; color: var(--text); animation-delay: 0.55s; margin-right: -0.5em; }
 .splash-studio span { color: var(--acc); }
-.splash-game { font-size: 46px; color: #fff; animation-delay: 0.45s; text-shadow: 0 0 24px rgba(163, 245, 58, 0.25); }
+.splash-game { font-size: 46px; color: #fff; animation-delay: 0.7s; text-shadow: 0 0 24px rgba(163, 245, 58, 0.25); }
 @keyframes rise { to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .splash * { animation-duration: 0.01s !important; animation-delay: 0s !important; } }
 

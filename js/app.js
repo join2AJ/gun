@@ -921,8 +921,8 @@ function gate() {
 }
 
 // ------------------------------------------------------------------ boot
-// Splash: the ARTIN mark draws in over ~0.5 s, names rise, then it fades.
-const SPLASH_MS = 1150;
+// Splash: the ARTIN mark animates in (~0.9 s), names rise, then it fades.
+const SPLASH_MS = 1500;
 setTimeout(() => { const sp = $('#splash'); sp.classList.add('done'); setTimeout(() => sp.remove(), 400); }, SPLASH_MS);
 buildFilters(); renderGrid(); renderHero(); syncToggles(); route(); gate();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
