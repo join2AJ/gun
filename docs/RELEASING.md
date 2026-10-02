@@ -8,7 +8,7 @@ Nothing changes without a record, and every release can be restored.
 2. **`version.json` is the only place the version lives.** The Android build reads it and Settings shows it.
    - `version`: semantic version. PATCH (1.1.**1**) for fixes and tweaks, MINOR (1.**2**.0) for new features, MAJOR (**2**.0.0) for big or breaking changes.
    - `versionCode`: a whole number that **must increase for every Google Play upload**. Play rejects equal or lower numbers.
-3. **Every release gets a git tag** `vX.Y.Z` on its commit, which is the restore point. The *Tag releases* GitHub workflow creates missing tags automatically from the commit hashes in `CHANGELOG.md` and from `version.json`. Locally, `scripts/tag-releases.sh` does the same.
+3. **Every release gets a git tag** `vX.Y.Z` on its commit, which is the restore point. The *Tag releases* GitHub workflow creates missing tags automatically from the commit hashes in `CHANGELOG.md` and from `version.json`. Locally, `scripts/tag-releases.sh` does the same. GitHub's bot can't create tags on commits whose workflow files differ from today's (`v1.0.0` and `v1.1.0` currently). Create those from a computer with `git fetch && scripts/tag-releases.sh && git push origin --tags`, or just use `scripts/rollback.sh`, which falls back to the CHANGELOG hash.
 4. **History is never rewritten.** Undoing happens with *new* commits (see Rollback), so nothing is ever lost.
 5. **Every released `.aab`/`.apk` is kept.** Attach them to a GitHub Release for that tag, or keep the Actions artifact.
 

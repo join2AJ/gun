@@ -21,4 +21,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           scripts/tag-releases.sh
-          git push origin --tags
+          # push one by one: GitHub refuses the bot tags on commits whose workflow files
+          # differ from today's (security rule). Those versions remain restorable via the
+          # commit hash in CHANGELOG.md (scripts/rollback.sh), or push them from a PC.
+          for t in $(git tag -l 'v*'); do
+            git ls-remote --exit-code --tags origin "refs/tags/$t" >/dev/null && continue
+            git push origin "refs/tags/$t" || echo "::warning::Could not create $t from Actions — run scripts/tag-releases.sh && git push origin --tags on a computer, or roll back with scripts/rollback.sh $t (uses the CHANGELOG hash)."
+          done

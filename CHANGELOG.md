@@ -10,6 +10,7 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 ## [Unreleased]
 ### Fixed
 - GitHub "Android build" workflow: it had failed on every run because the `android-actions/setup-android` step crashes on current runners. It now uses the runner's preinstalled Android SDK.
+- The "Tag releases" workflow pushes tags one at a time and warns instead of failing. GitHub won't let its bot create tags on commits with older workflow files (`v1.0.0` and `v1.1.0`), but those versions remain restorable through their CHANGELOG commit hashes.
 ### Changed
 - GitHub workflows updated to `actions/checkout@v5`, `setup-java@v5` and `upload-artifact@v5`, replacing the deprecated Node 20 versions.
 
