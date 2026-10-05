@@ -9,7 +9,7 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
-## [1.2.5] — 2026-10-05 · Play build 9
+## [1.2.5] — 2026-10-05 · Play build 9 · `d9299a3`
 ### Fixed
 - Store prices could stay on "Soon" forever: the app asked Google Play for the products only once at start-up. It now asks again with backoff while any product is missing, and again whenever the Store opens without prices or "Restore purchases" is tapped.
 - Supports Play Console's new one-time products with purchase options: if a product has no backwards-compatible option, the first purchase option is used for the price and the purchase.
