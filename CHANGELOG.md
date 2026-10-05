@@ -9,6 +9,15 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
+## [1.2.5] — 2026-10-05 · Play build 9
+### Fixed
+- Store prices could stay on "Soon" forever: the app asked Google Play for the products only once at start-up. It now asks again with backoff while any product is missing, and again whenever the Store opens without prices or "Restore purchases" is tapped.
+- Supports Play Console's new one-time products with purchase options: if a product has no backwards-compatible option, the first purchase option is used for the price and the purchase.
+### Added
+- The hidden diagnostics (tap the Settings version line 5 times) now include the purchase status: products found and any missing product IDs with Google's status code.
+### Changed
+- Service-worker cache bumped to `calibre-v14`.
+
 ## [1.2.4] — 2026-10-05 · Play build 8 · `bf40685`
 ### Changed
 - Settings is cleaner. The device-capability and ad-status lines are hidden; tap the version line 5 times to show or hide them as diagnostics. Ad errors no longer include the long help link.

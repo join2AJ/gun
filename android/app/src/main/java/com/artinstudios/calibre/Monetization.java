@@ -16,6 +16,7 @@ import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.UnfetchedProduct;
 import com.android.billingclient.api.QueryPurchasesParams;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -67,7 +68,8 @@ public class Monetization implements PurchasesUpdatedListener {
     private int rewardedFailures = 0;
     private int bannerFailures = 0;
     // Last AdMob result per format, shown in Settings so ad problems can be diagnosed on the phone.
-    private volatile String bannerStatus = "waiting", rewardedStatus = "waiting";
+    private volatile String bannerStatus = "waiting", rewardedStatus = "waiting", billingStatus = "connecting";
+    private int productFailures = 0;
     private final android.os.Handler bannerRetry = new android.os.Handler(android.os.Looper.getMainLooper());
     private final android.os.Handler retry = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean bannerWanted = false;
@@ -166,21 +168,44 @@ public class Monetization implements PurchasesUpdatedListener {
                 .build();
         billing.startConnection(new BillingClientStateListener() {
             @Override public void onBillingSetupFinished(BillingResult r) {
-                if (r.getResponseCode() == BillingClient.BillingResponseCode.OK) { queryProducts(); queryOwned(); }
-                else emit(event("billingUnavailable", r.getDebugMessage()));
+                if (r.getResponseCode() == BillingClient.BillingResponseCode.OK) { billingStatus = "connected"; queryProducts(); queryOwned(); }
+                else { billingStatus = "unavailable " + r.getResponseCode() + ": " + r.getDebugMessage(); emit(event("billingUnavailable", r.getDebugMessage())); }
             }
             @Override public void onBillingServiceDisconnected() { }
         });
     }
 
     private void queryProducts() {
+        if (billing == null || !billing.isReady()) return;
         List<QueryProductDetailsParams.Product> list = new ArrayList<>();
         for (String id : PRODUCTS) list.add(QueryProductDetailsParams.Product.newBuilder().setProductId(id).setProductType(BillingClient.ProductType.INAPP).build());
         billing.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(list).build(), (r, result) -> {
-            if (r.getResponseCode() != BillingClient.BillingResponseCode.OK) return;
-            for (ProductDetails pd : result.getProductDetailsList()) details.put(pd.getProductId(), pd);
+            if (r.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                billingStatus = "query error " + r.getResponseCode() + ": " + r.getDebugMessage();
+                retryProducts();
+                return;
+            }
+            for (ProductDetails pd : result.getProductDetailsList()) if (offerOf(pd) != null) details.put(pd.getProductId(), pd);
+            StringBuilder missing = new StringBuilder();
+            for (UnfetchedProduct u : result.getUnfetchedProductList()) missing.append(' ').append(u.getProductId()).append('=').append(u.getStatusCode());
+            billingStatus = "products " + details.size() + "/" + PRODUCTS.size() + (missing.length() > 0 ? " · missing" + missing : "");
+            if (details.size() < PRODUCTS.size()) retryProducts();
             emit(productsJson());
         });
+    }
+
+    // Products that are new, just activated or still being set up can be missing for a while; ask again later.
+    private void retryProducts() {
+        long delay = Math.min(600_000L, 30_000L << Math.min(productFailures++, 5));
+        retry.postDelayed(this::queryProducts, delay);
+    }
+
+    /** The purchase option to sell: the backwards-compatible one, else the first option. */
+    private static ProductDetails.OneTimePurchaseOfferDetails offerOf(ProductDetails pd) {
+        ProductDetails.OneTimePurchaseOfferDetails o = pd.getOneTimePurchaseOfferDetails();
+        if (o != null) return o;
+        List<ProductDetails.OneTimePurchaseOfferDetails> all = pd.getOneTimePurchaseOfferDetailsList();
+        return all != null && !all.isEmpty() ? all.get(0) : null;
     }
 
     private void queryOwned() {
@@ -216,14 +241,14 @@ public class Monetization implements PurchasesUpdatedListener {
     @JavascriptInterface public String adStatus() {
         try {
             return new JSONObject().put("sdk", adsReady ? "ready" : "starting").put("consent", consent != null && consent.canRequestAds() ? "ok" : "pending")
-                    .put("banner", bannerStatus).put("rewarded", rewardedStatus).toString();
+                    .put("banner", bannerStatus).put("rewarded", rewardedStatus).put("billing", billingStatus).toString();
         } catch (JSONException e) { return "{}"; }
     }
     /** Asks for a rewarded ad now (e.g. when the unlock dialog opens) instead of waiting for the next retry. */
     @JavascriptInterface public void loadRewardedNow() { activity.runOnUiThread(() -> { rewardedFailures = 0; loadRewarded(); }); }
     @JavascriptInterface public String products() { return productsJson(); }
     @JavascriptInterface public String owned() { return ownedJson(); }
-    @JavascriptInterface public void restore() { if (billing != null && billing.isReady()) queryOwned(); }
+    @JavascriptInterface public void restore() { if (billing != null && billing.isReady()) { productFailures = 0; queryProducts(); queryOwned(); } }
 
     /** Shows a rewarded ad; reports {type:"reward", token, earned} when it closes. */
     @JavascriptInterface
@@ -253,7 +278,7 @@ public class Monetization implements PurchasesUpdatedListener {
         if (pd == null || billing == null || !billing.isReady()) return false;
         activity.runOnUiThread(() -> {
             BillingFlowParams flow = BillingFlowParams.newBuilder()
-                    .setProductDetailsParamsList(List.of(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(pd).build()))
+                    .setProductDetailsParamsList(List.of(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(pd).setOfferToken(offerOf(pd).getOfferToken()).build()))
                     .build();
             billing.launchBillingFlow(activity, flow);
         });
@@ -274,7 +299,7 @@ public class Monetization implements PurchasesUpdatedListener {
         for (String id : PRODUCTS) {
             ProductDetails pd = details.get(id);
             if (pd == null) continue;
-            ProductDetails.OneTimePurchaseOfferDetails offer = pd.getOneTimePurchaseOfferDetails();
+            ProductDetails.OneTimePurchaseOfferDetails offer = offerOf(pd);
             try {
                 arr.put(new JSONObject().put("id", id).put("title", pd.getName()).put("price", offer != null ? offer.getFormattedPrice() : ""));
             } catch (JSONException ignored) { }

@@ -877,7 +877,7 @@ function openSettings() {
   const ads = Store.adStatus();
   $('#ad-note').hidden = !ads;
   const clean = (t) => String(t).replace(/\s*<https?:[^>]*>/g, '');
-  if (ads) $('#ad-note').textContent = `Ads — SDK: ${ads.sdk} · consent: ${ads.consent} · banner: ${clean(ads.banner)} · video: ${clean(ads.rewarded)}`;
+  if (ads) $('#ad-note').textContent = `Ads — SDK: ${ads.sdk} · consent: ${ads.consent} · banner: ${clean(ads.banner)} · video: ${clean(ads.rewarded)}${ads.billing ? ` · Purchases — ${clean(ads.billing)}` : ''}`;
   fetch('version.json').then((r) => r.json()).then((v) => { $('#app-version').textContent = `Calibre v${v.version} · build ${v.versionCode} · ${v.date}`; }).catch(() => {});
   $('#settings').showModal();
 }
@@ -925,6 +925,7 @@ function openUnlock(key) {
 function openStore() {
   $('#store-offers').innerHTML = Object.keys(PRODUCTS).map((id) => offerHtml(id, Store.owned.has(id) || Store.owned.has('pro_bundle'))).join('') + shopNote();
   $('#privacy-options').hidden = !Store.privacyOptionsRequired();
+  if (!Object.keys(Store.products).length && !$('#store').open) Store.restore(); // ask Play again for prices
   if (!$('#store').open) $('#store').showModal();
 }
 function renderLock() { if (S.w) $('#lock').hidden = !Store.gunLocked(S.w.id); }

@@ -30,7 +30,7 @@ function mockBackend() {
     setBanner(v) { document.documentElement.dataset.mockBanner = v ? '1' : '0'; },
     rewardedReady: () => true,
     loadRewardedNow() {},
-    adStatus: () => JSON.stringify({ sdk: 'mock', consent: 'ok', banner: 'showing', rewarded: 'ready' }),
+    adStatus: () => JSON.stringify({ sdk: 'mock', consent: 'ok', banner: 'showing', rewarded: 'ready', billing: 'products 3/3' }),
     products: () => JSON.stringify({ type: 'products', products: Object.keys(PRODUCTS).map((id) => ({ id, title: PRODUCTS[id].name, price: PRODUCTS[id].fallback })) }),
     owned: () => JSON.stringify({ type: 'owned', owned: [...owned] }),
     restore() { fire({ type: 'owned', owned: [...owned] }); },
