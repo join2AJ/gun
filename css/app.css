@@ -432,6 +432,9 @@ select { --cut: 6px; background: var(--panel-2); border: 0; box-shadow: inset 0 
 .set.sw input:checked::after { transform: translateX(20px); background: var(--acc-ink); }
 .set-note { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 10px 0 8px; }
 .set-keys { color: var(--muted); font-size: 12.5px; line-height: 2; margin: 0; }
+/* keyboard shortcuts only matter with a keyboard */
+.native .set-keys { display: none; }
+@media (hover: none) and (pointer: coarse) { .set-keys { display: none; } }
 kbd { font-family: var(--f-mono); font-size: 11px; padding: 1px 6px; box-shadow: inset 0 0 0 1px var(--line-2); background: var(--panel-2); margin: 0 1px; }
 .scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 .scene-card { --cut: 10px; position: relative; border: 0; padding: 0; height: 120px; overflow: hidden; background: #000; text-align: left; box-shadow: inset 0 0 0 1px var(--line); }

@@ -9,6 +9,12 @@ roll back to (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## [Unreleased]
 
+## [1.2.4] — 2026-10-05 · Play build 8
+### Changed
+- Settings is cleaner. The device-capability and ad-status lines are hidden; tap the version line 5 times to show or hide them as diagnostics. Ad errors no longer include the long help link.
+- The keyboard-shortcut line only shows on devices with a keyboard (not in the Android app or on touch screens).
+- Service-worker cache bumped to `calibre-v13`.
+
 ## [1.2.3] — 2026-10-02 · Play build 7 · `2a15e4e`
 ### Fixed
 - The banner ad never came back after one failed load (AdView only refreshes after a success). Failed banner loads now retry by themselves (30 s, 60 s, 2 min … up to 5 min).

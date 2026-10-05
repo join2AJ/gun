@@ -876,10 +876,17 @@ function openSettings() {
   ].join(' · ');
   const ads = Store.adStatus();
   $('#ad-note').hidden = !ads;
-  if (ads) $('#ad-note').textContent = `Ads — SDK: ${ads.sdk} · consent: ${ads.consent} · banner: ${ads.banner} · video: ${ads.rewarded}`;
+  const clean = (t) => String(t).replace(/\s*<https?:[^>]*>/g, '');
+  if (ads) $('#ad-note').textContent = `Ads — SDK: ${ads.sdk} · consent: ${ads.consent} · banner: ${clean(ads.banner)} · video: ${clean(ads.rewarded)}`;
   fetch('version.json').then((r) => r.json()).then((v) => { $('#app-version').textContent = `Calibre v${v.version} · build ${v.versionCode} · ${v.date}`; }).catch(() => {});
   $('#settings').showModal();
 }
+// Hidden diagnostics (device capabilities + ad status): tap the version line 5 times.
+let diagTaps = 0, diagTimer = 0;
+$('#app-version').addEventListener('click', () => {
+  clearTimeout(diagTimer); diagTimer = setTimeout(() => { diagTaps = 0; }, 1500);
+  if (++diagTaps >= 5) { diagTaps = 0; $('#diag').hidden = !$('#diag').hidden; toast($('#diag').hidden ? 'Diagnostics hidden' : 'Diagnostics shown', 1200); }
+});
 $('#settings').addEventListener('input', (e) => {
   const t = e.target, k = t.id.replace('s-', '');
   if (k === 'volume') { settings.volume = +t.value; audio.setVolume(settings.volume); }
